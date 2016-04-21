@@ -7,7 +7,7 @@
 #  日期: 2013.02.27
 #  修改记录：
 #      lana     created    2013-02-27
-#      
+#
 #***************************************************************************
 
 # add project path to auto_path
@@ -15,13 +15,13 @@ set projectPath [file dirname [info script]]
 lappend auto_path  $projectPath
 
 if {[catch {
-      
+
     # source testcenter pkgIndex.tcl
     set filepath [file join $projectPath "Source\\pkgIndexs.tcl"]
     source  $filepath
     puts "source TestCenter start_file successfully!"
     } err] == 1} {
-				
+
     set msg "Source TestCenter 启动文件发生异常，错误信息为: $err ."
     puts $msg
     }
@@ -31,7 +31,7 @@ package require LOG
 package require TestCenter
 
 set ::ATT_TESTCENTER_SUC 0
-set ::ATT_TESTCENTER_FAIL -1 
+set ::ATT_TESTCENTER_FAIL -1
 
 
 #全局函数: return proc name
@@ -39,11 +39,11 @@ proc ::__FUNC__ {args} {
 
     set procName ""
 
-    if { [catch {    
-        
+    if { [catch {
+
             set procName [lindex [info level -1] 0]
         }  err ] } {
-        
+
             puts "Warning:__FUNC__: $err."
         }
 
@@ -61,7 +61,7 @@ namespace eval ::ATTTestCenter {
     array set PortStatsSnapshot {}            ;# 用于保存获取到的端口统计快照
     array set StreamStatsSnapshot {}          ;# 用于保存获取到的stream统计快照
 
-} 
+}
 
 
 #*******************************************************************************
@@ -70,11 +70,11 @@ namespace eval ::ATTTestCenter {
 #Calls:  无
 #Data Accessed:   无
 #Data Updated:  无
-#Input:      
+#Input:
 #      chassisAddr     表示机框地址，用于连接TestCenter的IP地址
-# 
+#
 #Output:   无
-#Return:  
+#Return:
 #    $ATT_TESTCENTER_SUC  $msg        表示成功
 #    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
 #    其他值                           表示失败
@@ -82,16 +82,16 @@ namespace eval ::ATTTestCenter {
 #Others:   无
 #*******************************************************************************
 proc ::ATTTestCenter::ConnectChassis {chassisAddr } {
-	
+
 	set nRet $::ATT_TESTCENTER_SUC
 	set func [::__FUNC__]
 	set msg  ""
-	
+
 	foreach once {once} {
-		
+
 		# 调用::TestCenter::ConnectChassis连接TestCenter
 		if {[catch {set res [TestCenter::ConnectChassis $chassisAddr]} err] == 1} {
-			
+
 			set msg "调用TestCenter::ConnectChassis发生异常，错误信息为: $err ."
 			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
 			set nRet $::ATT_TESTCENTER_FAIL
@@ -99,17 +99,17 @@ proc ::ATTTestCenter::ConnectChassis {chassisAddr } {
 		}
 		# 判断执行结果
 		if {[lindex $res 0] != $TestCenter::ExpectSuccess} {
-			
+
 			set nRet $::ATT_TESTCENTER_FAIL
 			set msg [lindex $res 1]
 			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
 		} else {
-			
+
 			set msg [lindex $res 1]
 			LOG::DebugInfo $func $::ATTTestCenter::__FILE__  $msg
 		}
 	}
-	
+
 	return [list array [list [list int $nRet] [list string $msg]]]
 }
 
@@ -121,13 +121,13 @@ proc ::ATTTestCenter::ConnectChassis {chassisAddr } {
 #Calls:  无
 #Data Accessed:   无
 #Data Updated:  无
-#Input:      
+#Input:
 #      portLocation     表示端口的位置，由板卡号与端口号组成，用'/'连接。例如预约1号板卡的1号端口，则传入 "1/1"
 #      portName         指定预约端口的别名，用于后面对该端口的其他操作。
 #      portType         指定预约的端口类型。默认为"Ethernet"
 #
 #Output:   无
-#Return:  
+#Return:
 #    $ATT_TESTCENTER_SUC  $msg        表示成功
 #    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
 #    其他值                           表示失败
@@ -135,16 +135,16 @@ proc ::ATTTestCenter::ConnectChassis {chassisAddr } {
 #Others:   无
 #*******************************************************************************
 proc ::ATTTestCenter::ReservePort {portLocation portName {portType "Ethernet"}} {
-	
+
 	set nRet $::ATT_TESTCENTER_SUC
 	set func [::__FUNC__]
 	set msg  ""
-	
+
 	foreach once {once} {
-		
+
 		# 调用::TestCenter::ReservePort预约端口
 		if {[catch {set res [TestCenter::ReservePort $portLocation $portName $portType]} err] == 1} {
-			
+
 			set msg "调用TestCenter::ReservePort发生异常，错误信息为: $err ."
 			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
 			set nRet $::ATT_TESTCENTER_FAIL
@@ -152,20 +152,20 @@ proc ::ATTTestCenter::ReservePort {portLocation portName {portType "Ethernet"}} 
 		}
 		# 判断执行结果
 		if {[lindex $res 0] != $TestCenter::ExpectSuccess} {
-			
+
 			set nRet $::ATT_TESTCENTER_FAIL
 			set msg [lindex $res 1]
 			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
 		} else {
-			
+
 			set msg [lindex $res 1]
 			LOG::DebugInfo $func $::ATTTestCenter::__FILE__  $msg
-			
+
 			# 备份成功预约的端口名，以便其他操作使用
 			lappend ::ATTTestCenter::reservePort $portName
 		}
 	}
-	
+
 	return [list array [list [list int $nRet] [list string $msg]]]
 }
 
@@ -176,7 +176,7 @@ proc ::ATTTestCenter::ReservePort {portLocation portName {portType "Ethernet"}} 
 #Calls:  无
 #Data Accessed:   无
 #Data Updated:  无
-#Input:      
+#Input:
 #      portName     表示要配置的端口的名字，这里的端口名是预约端口时指定的名字
 #      args         表示要配置的端口的属性的列表，格式为{-options value ...},端口的具体属性如下：
 #        -mediaType   表示端口介质类型，取值范围为COPPER、FIBER。默认为COPPER
@@ -189,7 +189,7 @@ proc ::ATTTestCenter::ReservePort {portLocation portName {portType "Ethernet"}} 
 #        -portMode    仅针对10G,取值范围为LAN、WAN。默认为LAN
 #
 #Output:   无
-#Return:  
+#Return:
 #    $ATT_TESTCENTER_SUC  $msg        表示成功
 #    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
 #    其他值                           表示失败
@@ -197,16 +197,16 @@ proc ::ATTTestCenter::ReservePort {portLocation portName {portType "Ethernet"}} 
 #Others:   无
 #*******************************************************************************
 proc ::ATTTestCenter::ConfigPort {portName args} {
-	
+
     set nRet $::ATT_TESTCENTER_SUC
 	set func [::__FUNC__]
 	set msg  ""
-	
+
 	foreach once {once} {
-		
+
 		# 调用::TestCenter::ConfigPort配置端口的属性
 		if {[catch {set res [TestCenter::ConfigPort $portName $args]} err] == 1} {
-			
+
 			set msg "调用TestCenter::ConfigPort发生异常，错误信息为: $err ."
 			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
 			set nRet $::ATT_TESTCENTER_FAIL
@@ -214,17 +214,17 @@ proc ::ATTTestCenter::ConfigPort {portName args} {
 		}
 		# 判断执行结果
 		if {[lindex $res 0] != $TestCenter::ExpectSuccess} {
-			
+
 			set nRet $::ATT_TESTCENTER_FAIL
 			set msg [lindex $res 1]
 			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
 		} else {
-			
+
 			set msg [lindex $res 1]
 			LOG::DebugInfo $func $::ATTTestCenter::__FILE__  $msg
 		}
 	}
-	
+
 	return [list array [list [list int $nRet] [list string $msg]]]
 }
 
@@ -235,12 +235,12 @@ proc ::ATTTestCenter::ConfigPort {portName args} {
 #Calls:  无
 #Data Accessed:   无
 #Data Updated:  无
-#Input:      
+#Input:
 #      portName     表示要获取状态的端口的名字，这里的端口名是预约端口时指定的名字
 #      state        表示要获取端口的哪一种状态，取值范围为：PhyState,LinkState, LinkSpeed, DuplexMode
 #
 #Output:   无
-#Return:  
+#Return:
 #    $ATT_TESTCENTER_SUC  $state $msg 表示成功
 #    $ATT_TESTCENTER_FAIL "err"  $msg 表示调用函数失败
 #    其他值                           表示失败
@@ -248,19 +248,19 @@ proc ::ATTTestCenter::ConfigPort {portName args} {
 #Others:   无
 #*******************************************************************************
 proc ::ATTTestCenter::GetPortState {portName state} {
-	
+
     set nRet $::ATT_TESTCENTER_SUC
 	set func [::__FUNC__]
 	set msg  ""
 	set portStates ""
 	set value "err"
 	set tmpState -$state
-	
+
 	foreach once {once} {
-		
+
 		# 调用::TestCenter::GetPortState获取端口状态信息
 		if {[catch {set res [TestCenter::GetPortState $portName portStates]} err] == 1} {
-			
+
 			set msg "调用TestCenter::GetPortState发生异常，错误信息为: $err ."
 			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
 			set nRet $::ATT_TESTCENTER_FAIL
@@ -268,36 +268,36 @@ proc ::ATTTestCenter::GetPortState {portName state} {
 		}
 		# 判断执行结果
 		if {[lindex $res 0] != $TestCenter::ExpectSuccess} {
-			
+
 			set nRet $::ATT_TESTCENTER_FAIL
 			set msg [lindex $res 1]
 			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
 			break
 		} else {
-			
+
 			set msg [lindex $res 1]
 			LOG::DebugInfo $func $::ATTTestCenter::__FILE__  $msg
 		}
 		# 获取查询的状态项的值,状态项可以不区分大小写
 		set index [lsearch -nocase $portStates $tmpState]
 		if {$index != -1} {
-			
+
 			set value [lindex $portStates [expr $index + 1]]
             set msg "获取端口$portName 的$state 属性成功，其值为$value 。"
 		} else {
-			
+
 			set nRet $::ATT_TESTCENTER_FAIL
 			set msg "不支持查询状态项 $state.请确认拼写是否正确."
 			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
 		}
 	}
-	
+
 	return [list array [list [list int $nRet] [list string $value] [list string $msg] ]]
 }
 
 
 #*******************************************************************************
-#Function:   ::ATTTestCenter::CreateProfile {portName profileName args} 
+#Function:   ::ATTTestCenter::CreateProfile {portName profileName args}
 #Description:    创建profile, profile中设置的属性可应用于端口
 #Calls:   无
 #Data Accessed:    无
@@ -314,20 +314,20 @@ proc ::ATTTestCenter::GetPortState {portName state} {
 #        -Blocking         表示是否开启堵塞模式（Enable/Disable），默认为Disable
 #
 #Output:    无
-# Return:  
+# Return:
 #    $ATT_TESTCENTER_SUC  $msg        表示成功
 #    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
 #    其他值                           表示失败
 #Others:         无
 #*******************************************************************************
 proc ::ATTTestCenter::CreateProfile {portName profileName args} {
-	
+
 	set nRet $::ATT_TESTCENTER_SUC
 	set func [::__FUNC__]
 	set msg  ""
-	
+
 	foreach once {once} {
-		
+
 		# 根据portName生成traffic对象名，portName_traffic
 		set trafficName $portName\_traffic
 		# 检查traffic对象是否已存在
@@ -335,7 +335,7 @@ proc ::ATTTestCenter::CreateProfile {portName profileName args} {
 		if {$isExistFlag == 0} {
 			# 调用::TestCenter::CreateTraffic创建Traffic对象
 			if {[catch {set res [TestCenter::CreateTraffic $portName $trafficName ] } err] == 1} {
-				
+
 				set msg "调用TestCenter::CreateTraffic发生异常，错误信息为: $err ."
 				LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
 				set nRet $::ATT_TESTCENTER_FAIL
@@ -343,17 +343,17 @@ proc ::ATTTestCenter::CreateProfile {portName profileName args} {
 			}
 			# 判断执行结果
 			if {[lindex $res 0] != $TestCenter::ExpectSuccess} {
-				
+
 				set msg [lindex $res 1]
 				LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
 				set nRet $::ATT_TESTCENTER_FAIL
 				break
-			} 
+			}
 		}
-		
+
 		# 调用::TestCenter::SetupTrafficProfile创建profile
 		if {[catch {set res [TestCenter::SetupTrafficProfile $trafficName $profileName $args ] } err] == 1} {
-			
+
 			set msg "调用TestCenter::SetupTrafficProfile发生异常，错误信息为: $err ."
 			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
 			set nRet $::ATT_TESTCENTER_FAIL
@@ -361,32 +361,32 @@ proc ::ATTTestCenter::CreateProfile {portName profileName args} {
 		}
 		# 判断执行结果
 		if {[lindex $res 0] != $TestCenter::ExpectSuccess} {
-			
+
 			set nRet $::ATT_TESTCENTER_FAIL
 			set msg [lindex $res 1]
 			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
 		} else {
-			
+
 			set msg [lindex $res 1]
 			LOG::DebugInfo $func $::ATTTestCenter::__FILE__  $msg
-            
+
             # set msg display to user
             set msg "在端口$portName 创建 $profileName 成功！"
 		}
 	}
-	
+
 	return [list array [list [list int $nRet] [list string $msg]]]
 }
 
 
 #*******************************************************************************
-#Function:    ::ATTTestCenter::CreateEmptyStream {portName streamName args} 
+#Function:    ::ATTTestCenter::CreateEmptyStream {portName streamName args}
 #Description:  创建空流，仅创建流的名字， 帧长度以及速率等属性，
 #             其他报文的内容通过 ADD PDU 的方式构造
 #Calls:   无
 #Data Accessed:  无
 #Data Updated:  无
-#Input:   
+#Input:
 #    portName     表示需要创建stream的端口名，这里的端口名是预约端口时指定的名字
 #    streamName   表示需要创建的stream的名字，该名字可用于后面对stream的其他操作
 #    args         表示流对象的属性列表，格式为{-option value ...}。具体的流对象属性如下：
@@ -397,18 +397,18 @@ proc ::ATTTestCenter::CreateProfile {portName profileName args} {
 #                     默认为fixed
 #       -FrameLenStep 表示数据帧长度的变化步长，默认为1
 #       -FrameLenCount 表示数据帧长度变化的数量，默认为1
-#       -insertsignature 指明是否在数据流中插入signature field，取值：true | false  默认为true，插入signature field 
+#       -insertsignature 指明是否在数据流中插入signature field，取值：true | false  默认为true，插入signature field
 #       -ProfileName     指明stream要使用的Profile 的名字，这里的profile必须是之前创建过的profile
 #       -FillType        指明Payload的填充方式，取值范围为CONSTANT | INCR |DECR | PRBS，默认为CONSTANT
 #       -ConstantFillPattern  当FillType为Constant的时候，相应的填充值。默认为0
 #       -EnableFcsErrorInsertion  指明是否插入CRC错误帧，取值范围为TRUE | FALSE，默认为FALSE
 #       -EnableStream  指定modifier使用stream/flow功能, 当使用stream模式时，单端口stream数不能超过32k。
-#                      取值范围TRUE | FALSE，默认为FALSE 
+#                      取值范围TRUE | FALSE，默认为FALSE
 #       -TrafficPattern 主要用于流绑定的情形（使用SrcPoolName以及DstPoolName时），
 #                        取值范围为PAIR | BACKBONE | MESH，默认为PAIR
 #
 #Output:    无
-# Return:  
+# Return:
 #    $ATT_TESTCENTER_SUC  $msg        表示成功
 #    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
 #    其他值                           表示失败
@@ -416,22 +416,22 @@ proc ::ATTTestCenter::CreateProfile {portName profileName args} {
 #Others:    无
 #*******************************************************************************
 proc ::ATTTestCenter::CreateEmptyStream {portName streamName args} {
-	
+
 	set nRet $::ATT_TESTCENTER_SUC
 	set func [::__FUNC__]
 	set msg  ""
-	
+
 	foreach once {once} {
-		
+
 		# 根据portName生成traffic对象名，portName_traffic
 		set trafficName $portName\_traffic
-		
+
 		# 检查traffic对象是否已存在
 		set isExistFlag [TestCenter::IsObjectExist $trafficName]
 		if {$isExistFlag == 0} {
 			# 调用::TestCenter::CreateTraffic创建Traffic对象
 			if {[catch {set res [TestCenter::CreateTraffic $portName $trafficName ] } err] == 1} {
-				
+
 				set msg "调用TestCenter::CreateTraffic发生异常，错误信息为: $err ."
 				LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
 				set nRet $::ATT_TESTCENTER_FAIL
@@ -439,17 +439,17 @@ proc ::ATTTestCenter::CreateEmptyStream {portName streamName args} {
 			}
 			# 判断执行结果
 			if {[lindex $res 0] != $TestCenter::ExpectSuccess} {
-				
+
 				set msg [lindex $res 1]
 				LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
 				set nRet $::ATT_TESTCENTER_FAIL
 				break
-			} 
+			}
 		}
-		
+
 		# 调用::TestCenter::SetupStream创建流
 		if {[catch {set res [TestCenter::SetupStream $trafficName $streamName $args ] } err] == 1} {
-			
+
 			set msg "调用TestCenter::SetupStream发生异常，错误信息为: $err ."
 			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
 			set nRet $::ATT_TESTCENTER_FAIL
@@ -457,21 +457,21 @@ proc ::ATTTestCenter::CreateEmptyStream {portName streamName args} {
 		}
 		# 判断执行结果
 		if {[lindex $res 0] != $TestCenter::ExpectSuccess} {
-			
+
 			set nRet $::ATT_TESTCENTER_FAIL
 			set msg [lindex $res 1]
 			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
 		} else {
-			
+
 			set msg [lindex $res 1]
 			LOG::DebugInfo $func $::ATTTestCenter::__FILE__  $msg
-            
+
             # set msg display to user
             set msg "在端口$portName 创建 $streamName 成功！"
 		}
 	}
-	
-	return [list array [list [list int $nRet] [list string $msg]]]	
+
+	return [list array [list [list int $nRet] [list string $msg]]]
 }
 
 
@@ -487,7 +487,7 @@ proc ::ATTTestCenter::CreateEmptyStream {portName streamName args} {
 #                     Eth | Vlan | IPV4 | TCP | UDP | MPLS | IPV6 | POS | HDLC
 #      args           表示配置属性的参数列表，格式为{-option value ...},具体参数根据报文类型有所不同。
 #Output:         无
-#Return:  
+#Return:
 #    $ATT_TESTCENTER_SUC  $msg        表示成功
 #    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
 #    其他值                           表示失败
@@ -496,16 +496,16 @@ proc ::ATTTestCenter::CreateEmptyStream {portName streamName args} {
 
 #*******************************************************************************
 proc ::ATTTestCenter::CreateHeader {headerName headerType args} {
-	
+
 	set nRet $::ATT_TESTCENTER_SUC
 	set func [::__FUNC__]
 	set msg  ""
-	
+
 	foreach once {once} {
-		
+
 		# 调用::TestCenter::SetupHeader创建header pdu
 		if {[catch {set res [TestCenter::SetupHeader $headerName $headerType $args]} err] == 1} {
-			
+
 			set msg "调用TestCenter::SetupHeader发生异常，错误信息为: $err ."
 			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
 			set nRet $::ATT_TESTCENTER_FAIL
@@ -513,20 +513,20 @@ proc ::ATTTestCenter::CreateHeader {headerName headerType args} {
 		}
 		# 判断执行结果
 		if {[lindex $res 0] != $TestCenter::ExpectSuccess} {
-			
+
 			set nRet $::ATT_TESTCENTER_FAIL
 			set msg [lindex $res 1]
 			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
 		} else {
-			
+
 			set msg [lindex $res 1]
 			LOG::DebugInfo $func $::ATTTestCenter::__FILE__  $msg
-            
+
             # set msg display to user
             set msg "创建$headerName header成功！"
 		}
 	}
-	
+
 	return [list array [list [list int $nRet] [list string $msg]]]
 }
 
@@ -543,7 +543,7 @@ proc ::ATTTestCenter::CreateHeader {headerName headerType args} {
 #                    DHCP | PIM | IGMP | PPPoE | ICMP | ARP | Custom
 #    args           表示配置属性的参数列表，格式为{-option value ...},具体参数根据报文类型有所不同。
 #Output:         无
-#Return:  
+#Return:
 #    $ATT_TESTCENTER_SUC  $msg        表示成功
 #    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
 #    其他值                           表示失败
@@ -551,16 +551,16 @@ proc ::ATTTestCenter::CreateHeader {headerName headerType args} {
 #Others:   无
 #*******************************************************************************
 proc ::ATTTestCenter::CreatePacket {packetName packetType args} {
-	
+
 	set nRet $::ATT_TESTCENTER_SUC
 	set func [::__FUNC__]
 	set msg  ""
-	
+
 	foreach once {once} {
-		
+
 		# 调用::TestCenter::SetupPacket创建packet PDU
 		if {[catch {set res [TestCenter::SetupPacket $packetName $packetType $args]} err] == 1} {
-			
+
 			set msg "调用TestCenter::SetupPacket发生异常，错误信息为: $err ."
 			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
 			set nRet $::ATT_TESTCENTER_FAIL
@@ -568,21 +568,21 @@ proc ::ATTTestCenter::CreatePacket {packetName packetType args} {
 		}
 		# 判断执行结果
 		if {[lindex $res 0] != $TestCenter::ExpectSuccess} {
-			
+
 			set nRet $::ATT_TESTCENTER_FAIL
 			set msg [lindex $res 1]
 			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
 		} else {
-			
+
 			set msg [lindex $res 1]
 			LOG::DebugInfo $func $::ATTTestCenter::__FILE__  $msg
-            
+
             # set msg display to user
             set msg "创建$packetName packet成功！"
 		}
 	}
-	
-	return [list array [list [list int $nRet] [list string $msg]]]	
+
+	return [list array [list [list int $nRet] [list string $msg]]]
 }
 
 
@@ -596,7 +596,7 @@ proc ::ATTTestCenter::CreatePacket {packetName packetType args} {
 #    streamName     指定要添加PDU的steam对象,这里的streamName必须是前面已经创建好的stream名字
 #    PduList        表示需要添加到streamName中的PDU列表。
 #Output:         无
-#Return:  
+#Return:
 #    $ATT_TESTCENTER_SUC  $msg        表示成功
 #    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
 #    其他值                           表示失败
@@ -604,16 +604,16 @@ proc ::ATTTestCenter::CreatePacket {packetName packetType args} {
 #Others:   无
 #*******************************************************************************
 proc ::ATTTestCenter::AddPDUToStream {streamName PduList} {
-	
+
 	set nRet $::ATT_TESTCENTER_SUC
 	set func [::__FUNC__]
 	set msg  ""
-	
+
 	foreach once {once} {
-		
+
 		# 调用::TestCenter::AddPDUToStream添加PDU到stream中
 		if {[catch {set res [TestCenter::AddPDUToStream $streamName $PduList]} err] == 1} {
-			
+
 			set msg "调用TestCenter::AddPDUToStream发生异常，错误信息为: $err ."
 			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
 			set nRet $::ATT_TESTCENTER_FAIL
@@ -621,18 +621,18 @@ proc ::ATTTestCenter::AddPDUToStream {streamName PduList} {
 		}
 		# 判断执行结果
 		if {[lindex $res 0] != $TestCenter::ExpectSuccess} {
-			
+
 			set nRet $::ATT_TESTCENTER_FAIL
 			set msg [lindex $res 1]
 			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
 		} else {
-			
+
 			set msg [lindex $res 1]
 			LOG::DebugInfo $func $::ATTTestCenter::__FILE__  $msg
 		}
 	}
-	
-	return [list array [list [list int $nRet] [list string $msg]]]		
+
+	return [list array [list [list int $nRet] [list string $msg]]]
 }
 
 
@@ -646,7 +646,7 @@ proc ::ATTTestCenter::AddPDUToStream {streamName PduList} {
 #       portOrStream: 指明是清零端口的统计结果还是stream的统计结果，或者是所有的统计结果，取值范围为 port | stream | all
 #       nameList: 表示端口名list或者stream名list，如果为空，表示清零所有结果
 #Output:         无
-#Return:  
+#Return:
 #    list $TestCenter::ExpectSuccess  $msg         表示成功
 #    list $TestCenter::FunctionExecuteError $msg   表示调用函数失败
 #    其他值                                        表示失败
@@ -654,16 +654,16 @@ proc ::ATTTestCenter::AddPDUToStream {streamName PduList} {
 #Others:   无
 #*******************************************************************************
 proc ::ATTTestCenter::ClearTestResult {portOrStream {nameList ""}} {
-    
+
     set nRet $::ATT_TESTCENTER_SUC
 	set func [::__FUNC__]
 	set msg  ""
-	
+
 	foreach once {once} {
-		
+
 		# 调用::TestCenter::ClearTestResult清零指定对象的统计结果
 		if {[catch {set res [TestCenter::ClearTestResult $portOrStream $nameList]} err] == 1} {
-			
+
 			set msg "调用TestCenter::ClearTestResult发生异常，错误信息为: $err ."
 			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
 			set nRet $::ATT_TESTCENTER_FAIL
@@ -671,18 +671,18 @@ proc ::ATTTestCenter::ClearTestResult {portOrStream {nameList ""}} {
 		}
 		# 判断执行结果
 		if {[lindex $res 0] != $TestCenter::ExpectSuccess} {
-			
+
 			set nRet $::ATT_TESTCENTER_FAIL
 			set msg [lindex $res 1]
 			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
 		} else {
-			
+
 			set msg [lindex $res 1]
 			LOG::DebugInfo $func $::ATTTestCenter::__FILE__  $msg
 		}
 	}
-	
-	return [list array [list [list int $nRet] [list string $msg]]]		
+
+	return [list array [list [list int $nRet] [list string $msg]]]
 }
 
 
@@ -692,13 +692,13 @@ proc ::ATTTestCenter::ClearTestResult {portOrStream {nameList ""}} {
 #Calls:   无
 #Data Accessed:  无
 #Data Updated:  无
-#Input:   
+#Input:
 #    portName   表示需要创建过滤器的端口名，这里的端口名是预约端口时指定的名字
 #    filterName 表示需要创建的过滤器名
 #    filterType 表示过滤器对象类型 UDF 或者Stack
 #    filterValue 表示过滤器对象的值，格式为{{FilterExpr1}{FilterExpr2}…}
 #         当FilterType为Stack时，FilterExpr 的格式为：
-#              -ProtocolField ProtocolField -min min -max max -mask mask 
+#              -ProtocolField ProtocolField -min min -max max -mask mask
 #              -ProtocolField: 指明具体的过滤字段，必选参数。ProtocolField 的具体过虑字段及说明如下：
 #                  srcMac   源 MAC 地址
 #                  dstMac   目的 MAC 地址
@@ -711,7 +711,7 @@ proc ::ATTTestCenter::ClearTestResult {portOrStream {nameList ""}} {
 #                  srcPort   TCP、UDP协议源端口号
 #                  dstPort   TCP、UDP协议源端口号
 #              -min：指明过滤字段的起始值。必选参数
-#              -max:指明过滤字段的最大值。可选参数，若未指定，默认值为 min 
+#              -max:指明过滤字段的最大值。可选参数，若未指定，默认值为 min
 #              -mask：指明过滤字段的掩码值。可选参数，取值与具体的字段相关。
 #         当FilterType为UDF时，FilterExpr 的格式为：
 #              -pattern pattern -offset offset  -max max -mask mask
@@ -723,7 +723,7 @@ proc ::ATTTestCenter::ClearTestResult {portOrStream {nameList ""}} {
 #                          获取流的实时统计比较有效。取值范围为TRUE/FALSE，默认为FALSE
 #
 #Output:         无
-#Return:  
+#Return:
 #    $ATT_TESTCENTER_SUC  $msg        表示成功
 #    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
 #    其他值                           表示失败
@@ -731,16 +731,16 @@ proc ::ATTTestCenter::ClearTestResult {portOrStream {nameList ""}} {
 #Others:   无
 #*******************************************************************************
 proc ::ATTTestCenter::CreateFilter {portName filterName filterType filterValue {filterOnStreamId FALSE}} {
-	
+
 	set nRet $::ATT_TESTCENTER_SUC
 	set func [::__FUNC__]
 	set msg  ""
-	
+
 	foreach once {once} {
-		
+
 		# 调用::TestCenter::SetupFilter创建过滤器
 		if {[catch {set res [TestCenter::SetupFilter $portName $filterName $filterType $filterValue $filterOnStreamId]} err] == 1} {
-			
+
 			set msg "调用TestCenter::SetupFilter发生异常，错误信息为: $err ."
 			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
 			set nRet $::ATT_TESTCENTER_FAIL
@@ -748,21 +748,21 @@ proc ::ATTTestCenter::CreateFilter {portName filterName filterType filterValue {
 		}
 		# 判断执行结果
 		if {[lindex $res 0] != $TestCenter::ExpectSuccess} {
-			
+
 			set nRet $::ATT_TESTCENTER_FAIL
 			set msg [lindex $res 1]
 			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
 		} else {
-			
+
 			set msg [lindex $res 1]
 			LOG::DebugInfo $func $::ATTTestCenter::__FILE__  $msg
-            
+
             # set msg display to user
             set msg "在端口$portName 创建$filterName 成功!"
 		}
 	}
-	
-	return [list array [list [list int $nRet] [list string $msg]]]	
+
+	return [list array [list [list int $nRet] [list string $msg]]]
 }
 
 
@@ -773,14 +773,14 @@ proc ::ATTTestCenter::CreateFilter {portName filterName filterType filterValue {
 #Calls:   无
 #Data Accessed:  无
 #Data Updated:  无
-#Input:   
+#Input:
 #    portName        表示需要开启捕获报文的端口名，这里的端口名是预约端口时指定的名字
 #    savePath        表示捕获的报文保存的路径名。如果该参数为空，
 #                    则保存到默认路径下
 #    filterName      表示要过滤保存报文使用的过滤器的名字
 #
 #Output:         无
-# Return:  
+# Return:
 #    $ATT_TESTCENTER_SUC  $msg        表示成功
 #    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
 #    其他值                           表示失败
@@ -788,24 +788,24 @@ proc ::ATTTestCenter::CreateFilter {portName filterName filterType filterValue {
 #Others:   无
 #*******************************************************************************
 proc ::ATTTestCenter::StartCapture {portName {savePath ""} {filterName ""}} {
-	
+
 	set nRet $::ATT_TESTCENTER_SUC
 	set func [::__FUNC__]
 	set msg  ""
-	
+
 	foreach once {once} {
-		
+
 		# 根据portName生成分析引擎Analysis对象名，portName_Analysis
 		set AnalysisName $portName\_Analysis
-		
+
 		# 检查Analysis对象是否已存在
 		set isExistFlag [TestCenter::IsObjectExist $AnalysisName]
-		
+
 		# Analysis对象不存在，创建新的对象
 		if {$isExistFlag == 0} {
 			# 调用::TestCenter::SetupStaEngine创建Analysis对象
 			if {[catch {set res [TestCenter::SetupStaEngine $portName $AnalysisName Analysis] } err] == 1} {
-				
+
 				set msg "调用TestCenter::SetupStaEngine发生异常，错误信息为: $err ."
 				LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
 				set nRet $::ATT_TESTCENTER_FAIL
@@ -817,12 +817,12 @@ proc ::ATTTestCenter::StartCapture {portName {savePath ""} {filterName ""}} {
 				LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
 				set nRet $::ATT_TESTCENTER_FAIL
 				break
-			} 
+			}
 		}
-		
+
 		# 调用::TestCenter::StartCapture开启抓包
 		if {[catch {set res [TestCenter::StartCapture $AnalysisName $savePath $filterName] } err] == 1} {
-			
+
 			set msg "调用TestCenter::SetupStaEngine发生异常，错误信息为: $err ."
 			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
 			set nRet $::ATT_TESTCENTER_FAIL
@@ -830,21 +830,21 @@ proc ::ATTTestCenter::StartCapture {portName {savePath ""} {filterName ""}} {
 		}
 		# 判断执行结果
 		if {[lindex $res 0] != $TestCenter::ExpectSuccess} {
-			
+
 			set nRet $::ATT_TESTCENTER_FAIL
 			set msg [lindex $res 1]
 			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
 		} else {
-			
+
 			set msg [lindex $res 1]
 			LOG::DebugInfo $func $::ATTTestCenter::__FILE__  $msg
-            
+
             # set msg display to user
             set msg "端口$portName 开启报文捕获成功"
 		}
 	}
-	
-	return [list array [list [list int $nRet] [list string $msg]]]	
+
+	return [list array [list [list int $nRet] [list string $msg]]]
 }
 
 
@@ -854,11 +854,11 @@ proc ::ATTTestCenter::StartCapture {portName {savePath ""} {filterName ""}} {
 #Calls:   无
 #Data Accessed:  无
 #Data Updated:  无
-#Input:   
+#Input:
 #      portName   表示需要停止捕获报文的端口名，这里的端口名是预约端口时指定的名字
 #
 #Output:         无
-#Return:  
+#Return:
 #    $ATT_TESTCENTER_SUC  $msg        表示成功
 #    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
 #    其他值                           表示失败
@@ -866,19 +866,19 @@ proc ::ATTTestCenter::StartCapture {portName {savePath ""} {filterName ""}} {
 #Others:         无
 #*******************************************************************************
 proc ::ATTTestCenter::StopCapture {portName} {
-	
+
 	set nRet $::ATT_TESTCENTER_SUC
 	set func [::__FUNC__]
 	set msg  ""
-	
+
 	foreach once {once} {
-		
+
 		# 根据portName生成分析引擎Analysis对象名，portName_Analysis
 		set AnalysisName $portName\_Analysis
-		
+
 		# 检查Analysis对象是否已存在
 		set isExistFlag [TestCenter::IsObjectExist $AnalysisName]
-		
+
 		# Analysis对象不存在，返回失败
 		if {$isExistFlag == 0} {
 			set msg "$portName 端口未开启抓包，不用停止抓包."
@@ -886,10 +886,10 @@ proc ::ATTTestCenter::StopCapture {portName} {
 			set nRet $::ATT_TESTCENTER_FAIL
 			break
 		}
-		
+
 		# 调用::TestCenter::StopCapture停止抓包
 		if {[catch {set res [TestCenter::StopCapture $AnalysisName]} err] == 1} {
-			
+
 			set msg "调用TestCenter::StopCapture发生异常，错误信息为: $err ."
 			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
 			set nRet $::ATT_TESTCENTER_FAIL
@@ -897,21 +897,21 @@ proc ::ATTTestCenter::StopCapture {portName} {
 		}
 		# 判断执行结果
 		if {[lindex $res 0] != $TestCenter::ExpectSuccess} {
-			
+
 			set nRet $::ATT_TESTCENTER_FAIL
 			set msg [lindex $res 1]
 			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
 		} else {
-			
+
 			set msg [lindex $res 1]
 			LOG::DebugInfo $func $::ATTTestCenter::__FILE__  $msg
-            
+
             # set msg display to user
             set msg "端口$portName 停止报文捕获成功"
 		}
 	}
-	
-	return [list array [list [list int $nRet] [list string $msg]]]	
+
+	return [list array [list [list int $nRet] [list string $msg]]]
 }
 
 
@@ -922,13 +922,13 @@ proc ::ATTTestCenter::StopCapture {portName} {
 #Calls:   无
 #Data Accessed:  无
 #Data Updated:  无
-#Input:   
+#Input:
 #    trafficTime     表示发流时间，单位为s,默认为0
 #    flagArp         表示是否进行ARP学习，为TRUE, 进行，为FLASE，不进行，默认为TRUE
 #    portList        表示由需要发流的端口名组成的列表。为空表示所有端口 ，默认为空
 #
 #Output:         无
-#Return:  
+#Return:
 #    $ATT_TESTCENTER_SUC  $msg        表示成功
 #    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
 #    其他值                           表示失败
@@ -936,16 +936,16 @@ proc ::ATTTestCenter::StopCapture {portName} {
 #Others:   无
 #*******************************************************************************
 proc ::ATTTestCenter::TrafficOnPort {{trafficTime 0} {flagArp "TRUE"} {portList ""}} {
-	
+
 	set nRet $::ATT_TESTCENTER_SUC
 	set func [::__FUNC__]
 	set msg  ""
-	
+
 	foreach once {once} {
-		
+
 		# 准备统计引擎,调用::ATTTestCenter::SetupStaEngine创建并开启统计引擎
 		if {[catch {set res [::ATTTestCenter::SetupStaEngine] } err] == 1} {
-					
+
 			set msg "调用::ATTTestCenter::SetupStaEngine发生异常，错误信息为: $err ."
 			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
 			set nRet $::ATT_TESTCENTER_FAIL
@@ -957,7 +957,7 @@ proc ::ATTTestCenter::TrafficOnPort {{trafficTime 0} {flagArp "TRUE"} {portList 
 			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
 			set nRet $::ATT_TESTCENTER_FAIL
 			break
-		} 
+		}
 		# 获取需要发流的端口
 		if { $portList != "" } {
 			set tmpPortList $portList
@@ -966,7 +966,7 @@ proc ::ATTTestCenter::TrafficOnPort {{trafficTime 0} {flagArp "TRUE"} {portList 
 		}
 		# 调用::TestCenter::PortStartTraffic开始发流
 		if {[catch {set res [TestCenter::PortStartTraffic "chassis1" $tmpPortList 1 $flagArp]} err] == 1} {
-			
+
 			set msg "调用TestCenter::PortStartTraffic发生异常，错误信息为: $err ."
 			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
 			set nRet $::ATT_TESTCENTER_FAIL
@@ -974,13 +974,13 @@ proc ::ATTTestCenter::TrafficOnPort {{trafficTime 0} {flagArp "TRUE"} {portList 
 		}
 		# 判断执行结果
 		if {[lindex $res 0] != $TestCenter::ExpectSuccess} {
-			
+
 			set msg [lindex $res 1]
 			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
 			set nRet $::ATT_TESTCENTER_FAIL
 			break
-		} 
-		
+		}
+
 		# 判断发流时间,如果为0，立刻返回，否则等待发流，时间到后，停止发流
 		if {$trafficTime == 0} {
 			set msg "开启发流成功!"
@@ -988,15 +988,15 @@ proc ::ATTTestCenter::TrafficOnPort {{trafficTime 0} {flagArp "TRUE"} {portList 
 			LOG::DebugInfo $func $::ATTTestCenter::__FILE__  $msg
 			break
 		}
-		
+
 		# 等待发流
 		set sendTime [expr $trafficTime * 1000]
 		after $sendTime
-		
+
 		# 停止发流
 		# 调用::TestCenter::PortStopTraffic停止发流
 		if {[catch {set res [TestCenter::PortStopTraffic "chassis1" $tmpPortList]} err] == 1} {
-			
+
 			set msg "调用TestCenter::PortStopTraffic发生异常，错误信息为: $err ."
 			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
 			set nRet $::ATT_TESTCENTER_FAIL
@@ -1004,23 +1004,23 @@ proc ::ATTTestCenter::TrafficOnPort {{trafficTime 0} {flagArp "TRUE"} {portList 
 		}
 		# 判断执行结果
 		if {[lindex $res 0] != $TestCenter::ExpectSuccess} {
-			
+
 			set msg [lindex $res 1]
 			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
 			set nRet $::ATT_TESTCENTER_FAIL
 			break
 		} else {
-			
+
 			set msg [lindex $res 1]
 			LOG::DebugInfo $func $::ATTTestCenter::__FILE__  $msg
-            
+
             # set msg display to user
             set msg "端口$portList 发流已经成功完成!"
 		}
-		
+
 	}
-	
-	return [list array [list [list int $nRet] [list string $msg]]]	
+
+	return [list array [list [list int $nRet] [list string $msg]]]
 }
 
 
@@ -1030,11 +1030,11 @@ proc ::ATTTestCenter::TrafficOnPort {{trafficTime 0} {flagArp "TRUE"} {portList 
 #Calls:   无
 #Data Accessed:  无
 #Data Updated:  无
-#Input:   
+#Input:
 #    portList      表示需要停止发流的端口的端口名列表。为空表示所有端口，默认为空
 #
 #Output:   无
-#Return:  
+#Return:
 #    $ATT_TESTCENTER_SUC  $msg        表示成功
 #    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
 #    其他值                           表示失败
@@ -1042,11 +1042,11 @@ proc ::ATTTestCenter::TrafficOnPort {{trafficTime 0} {flagArp "TRUE"} {portList 
 #Others:    无
 #*******************************************************************************
 proc ::ATTTestCenter::StopTrafficOnPort {{portList ""}} {
-	
+
 	set nRet $::ATT_TESTCENTER_SUC
 	set func [::__FUNC__]
 	set msg  ""
-	
+
 	foreach once {once} {
 		# 获取需要停止发流的端口列表
 		if {$portList == ""} {
@@ -1054,10 +1054,10 @@ proc ::ATTTestCenter::StopTrafficOnPort {{portList ""}} {
 		} else {
 			set tmpPortList $portList
 		}
-		
+
 		# 调用::TestCenter::PortStopTraffic停止发流
 		if {[catch {set res [TestCenter::PortStopTraffic "chassis1" $tmpPortList]} err] == 1} {
-			
+
 			set msg "调用TestCenter::PortStopTraffic发生异常，错误信息为: $err ."
 			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
 			set nRet $::ATT_TESTCENTER_FAIL
@@ -1065,16 +1065,16 @@ proc ::ATTTestCenter::StopTrafficOnPort {{portList ""}} {
 		}
 		# 判断执行结果
 		if {[lindex $res 0] != $TestCenter::ExpectSuccess} {
-			
+
 			set msg [lindex $res 1]
 			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
 			set nRet $::ATT_TESTCENTER_FAIL
 			break
 		} else {
-			
+
 			set msg [lindex $res 1]
 			LOG::DebugInfo $func $::ATTTestCenter::__FILE__  $msg
-            
+
             # set msg display to user
             set msg "端口$portList 停止发流成功!"
 		}
@@ -1089,14 +1089,14 @@ proc ::ATTTestCenter::StopTrafficOnPort {{portList ""}} {
 #Calls:   无
 #Data Accessed:  无
 #Data Updated:  无
-#Input:   
+#Input:
 #    portName        表示发流stream所属端口的端口对象名
 #    flagArp         表示是否进行ARP学习，为TRUE, 进行，为FLASE，不进行，默认为TRUE
 #    trafficTime     表示发流时间，单位为s，默认为0
-#    streamList      表示需要发流的stream的名字列表。为空表示该端口下所有流,默认为空 
+#    streamList      表示需要发流的stream的名字列表。为空表示该端口下所有流,默认为空
 #
 #Output:  无
-#Return:  
+#Return:
 #    $ATT_TESTCENTER_SUC  $msg        表示成功
 #    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
 #    其他值                           表示失败
@@ -1104,16 +1104,16 @@ proc ::ATTTestCenter::StopTrafficOnPort {{portList ""}} {
 #Others:   无
 #*******************************************************************************
 proc ::ATTTestCenter::TrafficOnStream {portName {flagArp "TRUE"} {trafficTime 0} {streamList ""}} {
-	
+
 	set nRet $::ATT_TESTCENTER_SUC
 	set func [::__FUNC__]
 	set msg  ""
-	
+
 	foreach once {once} {
-		
+
 		# 准备统计引擎,调用::ATTTestCenter::SetupStaEngine创建并开启统计引擎
 		if {[catch {set res [::ATTTestCenter::SetupStaEngine] } err] == 1} {
-					
+
 			set msg "调用::ATTTestCenter::SetupStaEngine发生异常，错误信息为: $err ."
 			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
 			set nRet $::ATT_TESTCENTER_FAIL
@@ -1125,11 +1125,11 @@ proc ::ATTTestCenter::TrafficOnStream {portName {flagArp "TRUE"} {trafficTime 0}
 			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
 			set nRet $::ATT_TESTCENTER_FAIL
 			break
-		} 
-		
+		}
+
 		# 调用::TestCenter::StreamStartTraffic开启发流
 		if {[catch {set res [TestCenter::StreamStartTraffic $portName 1 $flagArp $streamList]} err] == 1} {
-			
+
 			set msg "调用TestCenter::StreamStartTraffic发生异常，错误信息为: $err ."
 			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
 			set nRet $::ATT_TESTCENTER_FAIL
@@ -1137,13 +1137,13 @@ proc ::ATTTestCenter::TrafficOnStream {portName {flagArp "TRUE"} {trafficTime 0}
 		}
 		# 判断执行结果
 		if {[lindex $res 0] != $TestCenter::ExpectSuccess} {
-			
+
 			set msg [lindex $res 1]
 			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
 			set nRet $::ATT_TESTCENTER_FAIL
 			break
-		} 
-		
+		}
+
 		# 判断发流时间,如果为0，立刻返回，否则等待发流，时间到后，停止发流
 		if {$trafficTime == 0} {
 			set msg "开启发流成功!"
@@ -1151,15 +1151,15 @@ proc ::ATTTestCenter::TrafficOnStream {portName {flagArp "TRUE"} {trafficTime 0}
 			LOG::DebugInfo $func $::ATTTestCenter::__FILE__  $msg
 			break
 		}
-		
+
 		# 等待发流
 		set sendTime [expr $trafficTime * 1000]
 		after $sendTime
-		
+
 		# 停止发流
 		# 调用::TestCenter::StreamStopTraffic停止发流
 		if {[catch {set res [TestCenter::StreamStopTraffic $portName $streamList]} err] == 1} {
-			
+
 			set msg "调用TestCenter::StreamStopTraffic发生异常，错误信息为: $err ."
 			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
 			set nRet $::ATT_TESTCENTER_FAIL
@@ -1167,21 +1167,21 @@ proc ::ATTTestCenter::TrafficOnStream {portName {flagArp "TRUE"} {trafficTime 0}
 		}
 		# 判断执行结果
 		if {[lindex $res 0] != $TestCenter::ExpectSuccess} {
-			
+
 			set msg [lindex $res 1]
 			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
 			set nRet $::ATT_TESTCENTER_FAIL
 			break
 		} else {
-			
+
 			set msg [lindex $res 1]
 			LOG::DebugInfo $func $::ATTTestCenter::__FILE__  $msg
-            
+
             # set msg display to user
             set msg "端口$portName 上的数据流 $streamList 发流已经成功完成!"
 		}
 	}
-	
+
 	return [list array [list [list int $nRet] [list string $msg]]]
 }
 
@@ -1192,12 +1192,12 @@ proc ::ATTTestCenter::TrafficOnStream {portName {flagArp "TRUE"} {trafficTime 0}
 #Calls:   无
 #Data Accessed:  无
 #Data Updated:  无
-#Input:   
+#Input:
 #    portName       表示发流stream所属端口的端口对象名
 #    streamList     表示需要停止发流的stream的名字列表。为空表示该端口下所有流
 #
 #Output:    无
-#Return:  
+#Return:
 #    $ATT_TESTCENTER_SUC  $msg        表示成功
 #    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
 #    其他值                           表示失败
@@ -1205,16 +1205,16 @@ proc ::ATTTestCenter::TrafficOnStream {portName {flagArp "TRUE"} {trafficTime 0}
 #Others:    无
 #*******************************************************************************
 proc ::ATTTestCenter::StopTrafficOnStream {portName {streamList ""}} {
-	
+
 	set nRet $::ATT_TESTCENTER_SUC
 	set func [::__FUNC__]
 	set msg  ""
-	
+
 	foreach once {once} {
-		
+
 		# 调用::TestCenter::StreamStopTraffic停止发流
 		if {[catch {set res [TestCenter::StreamStopTraffic $portName $streamList]} err] == 1} {
-			
+
 			set msg "调用TestCenter::StreamStopTraffic发生异常，错误信息为: $err ."
 			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
 			set nRet $::ATT_TESTCENTER_FAIL
@@ -1222,21 +1222,21 @@ proc ::ATTTestCenter::StopTrafficOnStream {portName {streamList ""}} {
 		}
 		# 判断执行结果
 		if {[lindex $res 0] != $TestCenter::ExpectSuccess} {
-			
+
 			set msg [lindex $res 1]
 			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
 			set nRet $::ATT_TESTCENTER_FAIL
 			break
 		} else {
-			
+
 			set msg [lindex $res 1]
 			LOG::DebugInfo $func $::ATTTestCenter::__FILE__  $msg
-            
+
             # set msg display to user
             set msg "端口$portName 上的数据流 $streamList 成功停止发流!"
 		}
 	}
-	
+
 	return [list array [list [list int $nRet] [list string $msg]]]
 }
 
@@ -1247,13 +1247,13 @@ proc ::ATTTestCenter::StopTrafficOnStream {portName {streamList ""}} {
 #Calls:   无
 #Data Accessed:  无
 #Data Updated:  无
-#Input:   
+#Input:
 #    portName         表示获取统计信息的端口名，这里的端口名是预约端口时指定的名字
 #    filterStream     表示是否过滤统计结果。为1，返回过滤过后的结果值，为0，返回过滤前的值
 #    resultPath      表示统计结果保存的路径名。如果该参数为空,则保存到默认路径下
 #
-#Output:   无  
-#Return:  
+#Output:   无
+#Return:
 #    $ATT_TESTCENTER_SUC  $msg        表示成功
 #    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
 #    其他值                           表示失败
@@ -1261,19 +1261,19 @@ proc ::ATTTestCenter::StopTrafficOnStream {portName {streamList ""}} {
 #Others:  无
 #*******************************************************************************
 proc ::ATTTestCenter::GetPortStatsSnapshot {portName {filterStream "0"} {resultPath ""}} {
-	
+
     set nRet $::ATT_TESTCENTER_SUC
 	set func [::__FUNC__]
 	set msg  ""
-	
+
 	foreach once {once} {
-		
+
 		# 根据portName生成统计引擎StaEngine对象名，portName_StaEngine
 		set StaEngineName $portName\_StaEngine
-		
+
 		# 检查StaEngine对象是否存在
 		set isExistFlag [TestCenter::IsObjectExist $StaEngineName]
-		
+
 		# StaEngine对象不存在，返回失败
 		if {$isExistFlag == 0} {
 			set msg "$portName 端口未开启发流，不能获取统计结果."
@@ -1281,11 +1281,11 @@ proc ::ATTTestCenter::GetPortStatsSnapshot {portName {filterStream "0"} {resultP
 			set nRet $::ATT_TESTCENTER_FAIL
 			break
 		}
-		
+
 		# 调用::TestCenter::GetPortStatsSnapshot获取统计信息
 		set resultData ""
 		if {[catch {set res [TestCenter::GetPortStatsSnapshot $StaEngineName resultData $filterStream $resultPath]} err] == 1} {
-			
+
 			set msg "调用TestCenter::GetPortStatsSnapshot发生异常，错误信息为: $err ."
 			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
 			set nRet $::ATT_TESTCENTER_FAIL
@@ -1293,22 +1293,22 @@ proc ::ATTTestCenter::GetPortStatsSnapshot {portName {filterStream "0"} {resultP
 		}
 		# 判断执行结果
 		if {[lindex $res 0] != $TestCenter::ExpectSuccess} {
-			
+
 			set msg [lindex $res 1]
 			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
 			set nRet $::ATT_TESTCENTER_FAIL
 			break
 		} else {
-			
+
 			set msg [lindex $res 1]
 			LOG::DebugInfo $func $::ATTTestCenter::__FILE__  $msg
             set ::ATTTestCenter::PortStatsSnapshot($portName) $resultData
-            
+
             # set msg display to user
             set msg "获取端口$portName 的统计快照成功。结果为：$resultData"
 		}
 	}
-	
+
 	return [list array [list [list int $nRet] [list string $msg]]]
 }
 
@@ -1319,13 +1319,13 @@ proc ::ATTTestCenter::GetPortStatsSnapshot {portName {filterStream "0"} {resultP
 #Calls:   无
 #Data Accessed:  无
 #Data Updated:  无
-#Input:   
+#Input:
 #    portName        表示获取统计信息的端口名，这里的端口名是预约端口时指定的名字
 #    streamName      表示需要统计的流的名字，这里的stream名必须是创建过的stream
 #    resultPath      表示统计结果保存的路径名。如果该参数为空,则保存到默认路径下
-#    
+#
 #Output:    无
-#Return:  
+#Return:
 #    $ATT_TESTCENTER_SUC  $msg        表示成功
 #    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
 #    其他值                           表示失败
@@ -1333,19 +1333,19 @@ proc ::ATTTestCenter::GetPortStatsSnapshot {portName {filterStream "0"} {resultP
 #Others:   无
 #*******************************************************************************
 proc ::ATTTestCenter::GetStreamStatsSnapshot {portName streamName {resultPath ""}} {
-	
+
     set nRet $::ATT_TESTCENTER_SUC
 	set func [::__FUNC__]
 	set msg  ""
-	
+
 	foreach once {once} {
-		
+
 		# 根据portName生成统计引擎StaEngine对象名，portName_StaEngine
 		set StaEngineName $portName\_StaEngine
-		
+
 		# 检查StaEngine对象是否存在
 		set isExistFlag [TestCenter::IsObjectExist $StaEngineName]
-		
+
 		# StaEngine对象不存在，返回失败
 		if {$isExistFlag == 0} {
 			set msg "$portName 端口未开启发流，不能获取统计结果."
@@ -1353,12 +1353,12 @@ proc ::ATTTestCenter::GetStreamStatsSnapshot {portName streamName {resultPath ""
 			set nRet $::ATT_TESTCENTER_FAIL
 			break
 		}
-		
+
 		# 调用::TestCenter::GetStreamStatsSnapshot获取统计信息
 		set resultData ""
 
 		if {[catch {set res [TestCenter::GetStreamStatsSnapshot $StaEngineName $streamName resultData $resultPath]} err] == 1} {
-			
+
 			set msg "调用TestCenter::GetStreamStatsSnapshot发生异常，错误信息为: $err ."
 			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
 			set nRet $::ATT_TESTCENTER_FAIL
@@ -1366,24 +1366,24 @@ proc ::ATTTestCenter::GetStreamStatsSnapshot {portName streamName {resultPath ""
 		}
 		# 判断执行结果
 		if {[lindex $res 0] != $TestCenter::ExpectSuccess} {
-			
+
 			set msg [lindex $res 1]
 			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
 			set nRet $::ATT_TESTCENTER_FAIL
 			break
 		} else {
-			
+
 			set msg [lindex $res 1]
 			LOG::DebugInfo $func $::ATTTestCenter::__FILE__  $msg
-            
+
             set ::ATTTestCenter::StreamStatsSnapshot($streamName) $resultData
-            
+
             # set msg display to user
             set msg "获取数据流$streamName 的统计结果快照成功。结果为：$resultData"
 		}
 	}
-	
-	return [list array [list [list int $nRet] [list string $msg]]]	
+
+	return [list array [list [list int $nRet] [list string $msg]]]
 }
 
 
@@ -1393,13 +1393,13 @@ proc ::ATTTestCenter::GetStreamStatsSnapshot {portName streamName {resultPath ""
 #Calls:   无
 #Data Accessed:  无
 #Data Updated:  无
-#Input:   
+#Input:
 #    portName         表示获取统计信息的端口名，这里的端口名是预约端口时指定的名字
 #    filterStream     表示是否过滤统计结果。为1，返回过滤过后的结果值，为0，返回过滤前的值
 #    subOption        表示需要获取的统计结果子项名。如果为空，返回所有信息
 #
-#Output:   无  
-#Return:  
+#Output:   无
+#Return:
 #    $ATT_TESTCENTER_SUC  $msg        表示成功
 #    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
 #    其他值                           表示失败
@@ -1407,14 +1407,14 @@ proc ::ATTTestCenter::GetStreamStatsSnapshot {portName streamName {resultPath ""
 #Others:  无
 #*******************************************************************************
 proc ::ATTTestCenter::GetPortStats {portName {filterStream "0"} {subOption ""}} {
-	
+
     set nRet $::ATT_TESTCENTER_SUC
 	set func [::__FUNC__]
 	set msg  ""
 	set resultData ""
-    
+
 	foreach once {once} {
-        
+
         # 判断portName是否已有快照
         set tmpInfo [array get ::ATTTestCenter::PortStatsSnapshot $portName]
 		if {$tmpInfo != ""} {
@@ -1422,35 +1422,35 @@ proc ::ATTTestCenter::GetPortStats {portName {filterStream "0"} {subOption ""}} 
             set result [lindex $tmpInfo 1]
 			# 获取指定子项的值，如果没有指定，返回所有结果
             if {$subOption != ""} {
-				
+
                 set index [lsearch -nocase $result -$subOption]
                 if {$index != -1} {
-                    
+
                     set resultData [lindex $result [expr $index + 1]]
                     set msg "从$portName 的统计结果快照中获取$subOption 成功，其值为$resultData 。"
                     LOG::DebugInfo $func $::ATTTestCenter::__FILE__  $msg
                 } else {
-                    
+
                     set msg "从$portName 的统计结果快照中获取$subOption的信息失败，统计结果快照为:$result ."
                     LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
                     set nRet $::ATT_TESTCENTER_FAIL
                     break
                 }
 			} else {
-                
+
                 set resultData $result
                 set msg "从$portName 的统计结果快照中获取$subOption 成功，其值为$resultData 。"
                 LOG::DebugInfo $func $::ATTTestCenter::__FILE__  $msg
 			}
 		} else {
             # 还没有快照，获取实时数据值
-            
+
             # 根据portName生成统计引擎StaEngine对象名，portName_StaEngine
             set StaEngineName $portName\_StaEngine
-            
+
             # 检查StaEngine对象是否存在
             set isExistFlag [TestCenter::IsObjectExist $StaEngineName]
-            
+
             # StaEngine对象不存在，返回失败
             if {$isExistFlag == 0} {
                 set msg "$portName 端口未开启发流，不能获取统计结果."
@@ -1458,10 +1458,10 @@ proc ::ATTTestCenter::GetPortStats {portName {filterStream "0"} {subOption ""}} 
                 set nRet $::ATT_TESTCENTER_FAIL
                 break
             }
-            
+
             # 调用::TestCenter::GetPortStats获取统计信息
             if {[catch {set res [TestCenter::GetPortStats $StaEngineName resultData $filterStream $subOption]} err] == 1} {
-                
+
                 set msg "调用TestCenter::GetPortStats发生异常，错误信息为: $err ."
                 LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
                 set nRet $::ATT_TESTCENTER_FAIL
@@ -1469,22 +1469,22 @@ proc ::ATTTestCenter::GetPortStats {portName {filterStream "0"} {subOption ""}} 
             }
             # 判断执行结果
             if {[lindex $res 0] != $TestCenter::ExpectSuccess} {
-                
+
                 set msg [lindex $res 1]
                 LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
                 set nRet $::ATT_TESTCENTER_FAIL
                 break
             } else {
-                
+
                 set msg [lindex $res 1]
                 LOG::DebugInfo $func $::ATTTestCenter::__FILE__  $msg
-                
+
                 # set msg display to user
                 set msg "获取端口$portName 的$subOption 成功，其值为$resultData 。"
             }
         }
 	}
-	
+
 	return [list array [list [list int $nRet] [list string $resultData] [list string $msg]]]
 }
 
@@ -1495,12 +1495,12 @@ proc ::ATTTestCenter::GetPortStats {portName {filterStream "0"} {subOption ""}} 
 #Calls:   无
 #Data Accessed:  无
 #Data Updated:  无
-#Input:   
+#Input:
 #    portName        表示获取统计信息的端口名，这里的端口名是预约端口时指定的名字
 #    streamName      表示需要统计的流的名字，这里的stream名必须是创建过的stream
 #    subOption       表示需要获取的统计结果的子项名。如果为空，返回所有子项信息
 #Output:    无
-#Return:  
+#Return:
 #    $ATT_TESTCENTER_SUC  $msg        表示成功
 #    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
 #    其他值                           表示失败
@@ -1508,13 +1508,13 @@ proc ::ATTTestCenter::GetPortStats {portName {filterStream "0"} {subOption ""}} 
 #Others:   无
 #*******************************************************************************
 proc ::ATTTestCenter::GetStreamStats {portName streamName {subOption ""}} {
-	
+
     set nRet $::ATT_TESTCENTER_SUC
 	set func [::__FUNC__]
 	set msg  ""
-	
+
 	foreach once {once} {
-        
+
         # 判断streamName是否已有快照
         set tmpInfo [array get ::ATTTestCenter::StreamStatsSnapshot $streamName]
 		if {$tmpInfo != ""} {
@@ -1522,35 +1522,35 @@ proc ::ATTTestCenter::GetStreamStats {portName streamName {subOption ""}} {
             set result [lindex $tmpInfo 1]
 			# 获取指定子项的值，如果没有指定，返回所有结果
             if {$subOption != ""} {
-				
+
                 set index [lsearch -nocase $result -$subOption]
                 if {$index != -1} {
-                    
+
                     set resultData [lindex $result [expr $index + 1]]
                     set msg "从$streamName 的统计结果快照中获取$subOption 成功，其值为$resultData 。"
                     LOG::DebugInfo $func $::ATTTestCenter::__FILE__  $msg
                 } else {
-                    
+
                     set msg "从$streamName 的统计结果快照中获取$subOption的信息失败，统计结果快照为:$result ."
                     LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
                     set nRet $::ATT_TESTCENTER_FAIL
                     break
                 }
 			} else {
-                
+
                 set resultData $result
                 set msg "从$streamName 的统计结果快照中获取$subOption 成功，其值为$resultData 。"
                 LOG::DebugInfo $func $::ATTTestCenter::__FILE__  $msg
 			}
 		} else {
             # 还没有快照，获取实时数据值
-		
+
             # 根据portName生成统计引擎StaEngine对象名，portName_StaEngine
             set StaEngineName $portName\_StaEngine
-            
+
             # 检查StaEngine对象是否存在
             set isExistFlag [TestCenter::IsObjectExist $StaEngineName]
-            
+
             # StaEngine对象不存在，返回失败
             if {$isExistFlag == 0} {
                 set msg "$portName 端口未开启发流，不能获取统计结果."
@@ -1558,12 +1558,12 @@ proc ::ATTTestCenter::GetStreamStats {portName streamName {subOption ""}} {
                 set nRet $::ATT_TESTCENTER_FAIL
                 break
             }
-            
+
             # 调用::TestCenter::GetStreamStats获取统计信息
             set resultData ""
-    
+
             if {[catch {set res [TestCenter::GetStreamStats $StaEngineName $streamName resultData $subOption ]} err] == 1} {
-                
+
                 set msg "调用TestCenter::GetStreamStats发生异常，错误信息为: $err ."
                 LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
                 set nRet $::ATT_TESTCENTER_FAIL
@@ -1571,23 +1571,23 @@ proc ::ATTTestCenter::GetStreamStats {portName streamName {subOption ""}} {
             }
             # 判断执行结果
             if {[lindex $res 0] != $TestCenter::ExpectSuccess} {
-                
+
                 set msg [lindex $res 1]
                 LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
                 set nRet $::ATT_TESTCENTER_FAIL
                 break
             } else {
-                
+
                 set msg [lindex $res 1]
                 LOG::DebugInfo $func $::ATTTestCenter::__FILE__  $msg
-                
+
                 # set msg display to user
                 set msg "获取数据流$streamName 的$subOption 成功，其值为$resultData 。"
             }
         }
 	}
-	
-	return [list array [list [list int $nRet] [list string $resultData] [list string $msg]]]	
+
+	return [list array [list [list int $nRet] [list string $resultData] [list string $msg]]]
 }
 
 
@@ -1597,7 +1597,7 @@ proc ::ATTTestCenter::GetStreamStats {portName streamName {subOption ""}} {
 #Calls:   无
 #Data Accessed:  无
 #Data Updated:  无
-#Input:   
+#Input:
 #    portName   表示需要创建host的端口名，这里的端口名是预约端口时指定的名字
 #    hostName   表示需要创建的host的名字。该名字用于后面对该host的其他操作
 #    args       表示需要创建的IGMP host的属性列表。其格式为{-option value}.host的属性有：
@@ -1621,7 +1621,7 @@ proc ::ATTTestCenter::GetStreamStats {portName streamName {subOption ""}} {
 #       -FlagPing         指明是否支持Ping功能，enable/disable，默认为enable
 #
 #Output:         无
-#Return:  
+#Return:
 #    $ATT_TESTCENTER_SUC  $msg        表示成功
 #    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
 #    其他值                           表示失败
@@ -1634,47 +1634,47 @@ proc ::ATTTestCenter::CreateHost {portName hostName args} {
 	set func [::__FUNC__]
 	set msg  ""
 	set IntName $portName
-    
+
 	foreach once {once} {
-        
+
         # 去掉args外层{}
         if {[llength $args] == 1} {
             set args [lindex $args 0]
         }
-        
+
         # 判断是否要添加vlan
         set index [lsearch -nocase $args -EnableVlan]
         if {$index != -1} {
-            
+
             set EnableVlan [lindex $args [expr $index + 1]]
             set args [lreplace $args $index [expr $index + 1]]
         } else  {
             set EnableVlan disable
         }
-        
+
         # 如果要添加vlan，需要先创建vlan子接口，然后再用子接口创建host
         if {[string tolower $EnableVlan] == "enable"} {
             # 获取子接口的配置信息
-            set index [lsearch -nocase $args -VlanId] 
+            set index [lsearch -nocase $args -VlanId]
             if {$index != -1} {
                 set VlanId [lindex $args [expr $index + 1]]
                 set args [lreplace $args $index [expr $index + 1]]
             } else  {
                 set VlanId 100
             }
-            
-            set index [lsearch -nocase $args -VlanPriority] 
+
+            set index [lsearch -nocase $args -VlanPriority]
             if {$index != -1} {
                 set VlanPriority [lindex $args [expr $index + 1]]
                 set args [lreplace $args $index [expr $index + 1]]
             } else  {
                 set VlanPriority 0
             }
-            
+
             # 调用::TestCenter::SetupVlan创建子接口
             set vlanName vlan_$hostName
             if {[catch {set res [TestCenter::SetupVlan $portName $vlanName -VlanId $VlanId -VlanPriority $VlanPriority]} err] == 1} {
-			
+
                 set msg "调用TestCenter::SetupVlan发生异常，错误信息为: $err ."
                 LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
                 set nRet $::ATT_TESTCENTER_FAIL
@@ -1682,7 +1682,7 @@ proc ::ATTTestCenter::CreateHost {portName hostName args} {
             }
             # 判断执行结果
             if {[lindex $res 0] != $TestCenter::ExpectSuccess} {
-                
+
                 set msg [lindex $res 1]
                 LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
                 set nRet $::ATT_TESTCENTER_FAIL
@@ -1691,10 +1691,10 @@ proc ::ATTTestCenter::CreateHost {portName hostName args} {
             LOG::DebugInfo $func $::ATTTestCenter::__FILE__  "创建Vlan子接口成功。"
             set IntName $vlanName
         }
-        
+
 		# 调用::TestCenter::SetupHost创建host
 		if {[catch {set res [TestCenter::SetupHost $IntName $hostName $args]} err] == 1} {
-			
+
 			set msg "调用TestCenter::SetupHost发生异常，错误信息为: $err ."
 			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
 			set nRet $::ATT_TESTCENTER_FAIL
@@ -1702,18 +1702,18 @@ proc ::ATTTestCenter::CreateHost {portName hostName args} {
 		}
 		# 判断执行结果
 		if {[lindex $res 0] != $TestCenter::ExpectSuccess} {
-			
+
 			set msg [lindex $res 1]
 			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
 			set nRet $::ATT_TESTCENTER_FAIL
 			break
 		} else {
-			
+
 			set msg [lindex $res 1]
 			LOG::DebugInfo $func $::ATTTestCenter::__FILE__  $msg
 		}
 	}
-	
+
 	return [list array [list [list int $nRet] [list string $msg]]]
 }
 
@@ -1731,7 +1731,7 @@ proc ::ATTTestCenter::CreateHost {portName hostName args} {
 #    interval  表示发送两个ARP请求的间隔时间，单位s，默认为1
 #
 #Output:         无
-#Return:  
+#Return:
 #    $ATT_TESTCENTER_SUC  $msg        表示成功
 #    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
 #    其他值                           表示失败
@@ -1739,16 +1739,16 @@ proc ::ATTTestCenter::CreateHost {portName hostName args} {
 #Others:   无
 #*******************************************************************************
 proc ::ATTTestCenter::StartARPStudy {srcHost {dstHost ""} {retries "3"} {interval "1"}} {
-	
+
     set nRet $::ATT_TESTCENTER_SUC
 	set func [::__FUNC__]
 	set msg  ""
-	
+
 	foreach once {once} {
-		
+
 		# 调用::TestCenter::SetupHost创建host
 		if {[catch {set res [TestCenter::StartARPStudy $srcHost $dstHost $retries $interval]} err] == 1} {
-			
+
 			set msg "调用TestCenter::StartARPStudy发生异常，错误信息为: $err ."
 			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
 			set nRet $::ATT_TESTCENTER_FAIL
@@ -1756,19 +1756,270 @@ proc ::ATTTestCenter::StartARPStudy {srcHost {dstHost ""} {retries "3"} {interva
 		}
 		# 判断执行结果
 		if {[lindex $res 0] != $TestCenter::ExpectSuccess} {
-			
+
 			set msg [lindex $res 1]
 			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
 			set nRet $::ATT_TESTCENTER_FAIL
 			break
 		} else {
-			
+
 			set msg [lindex $res 1]
 			LOG::DebugInfo $func $::ATTTestCenter::__FILE__  $msg
 		}
 	}
-	
+
 	return [list array [list [list int $nRet] [list string $msg]]]
+}
+
+
+#*******************************************************************************
+#Function:    ::ATTTestCenter::CreateDHCPServer {portName routerName args}
+#Description:   在指定端口创建DHCP server，并配置DHCP server的属性
+#Calls:   无
+#Data Accessed:  无
+#Data Updated:  无
+#Input:
+#    portName     表示需要创建DHCP Server的端口名，这里的端口名是预约端口时指定的名字
+#    routerName   表示需要创建的DHCP Server的名字。该名字用于后面对该DHCP Server的其他操作
+#    args         表示需要创建的DHCP Server的属性列表。其格式为{-option value}.router的属性有：
+#       -RouterId     表示指定的RouterId，默认为1.1.1.1
+#       -LocalMac     表示server接口MAC，默认为00:00:00:11:01:01
+#       -TesterIpAddr 表示server接口IP，默认为192.0.0.2
+#       -PoolStart    表示地址池开始的IP地址，默认为192.0.0.1
+#       -PoolNum      表示地址池的数量，默认为254
+#       -PoolModifier 表示地址池中变化的步长，步长从IP地址的最后一位依次增加，默认为1
+#       -FlagGateway  表示是否配置网关IP地址，默认为FALSE
+#       -Ipv4Gateway  表示网关IP地址，默认为192.0.0.1
+#       -Active       表示DHCP server会话是否激活，默认为TRUE
+#       -LeaseTime    表示租约时间，单位为秒。默认为3600
+#
+#Output:         无
+#Return:
+#    $ATT_TESTCENTER_SUC  $msg        表示成功
+#    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
+#    其他值                           表示失败
+#
+#Others:   无
+#*******************************************************************************
+proc ::ATTTestCenter::CreateDHCPServer {portName routerName args} {
+
+    set nRet $::ATT_TESTCENTER_SUC
+	set func [::__FUNC__]
+	set msg  ""
+	set IntName $portName
+    set argsSetupRouter ""
+
+    foreach once {once} {
+
+		# 去掉args外层{}
+        if {[llength $args] == 1} {
+            set args [lindex $args 0]
+        }
+
+        # 判断是否要添加vlan
+        set index [lsearch -nocase $args -EnableVlan]
+        if {$index != -1} {
+
+            set EnableVlan [lindex $args [expr $index + 1]]
+            set args [lreplace $args $index [expr $index + 1]]
+        } else  {
+            set EnableVlan disable
+        }
+
+        # 如果要添加vlan，需要先创建vlan子接口，然后再用子接口创建host
+        if {[string tolower $EnableVlan] == "enable"} {
+            # 获取子接口的配置信息
+            set index [lsearch -nocase $args -VlanId]
+            if {$index != -1} {
+                set VlanId [lindex $args [expr $index + 1]]
+                set args [lreplace $args $index [expr $index + 1]]
+            } else  {
+                set VlanId 100
+            }
+
+            set index [lsearch -nocase $args -VlanPriority]
+            if {$index != -1} {
+                set VlanPriority [lindex $args [expr $index + 1]]
+                set args [lreplace $args $index [expr $index + 1]]
+            } else  {
+                set VlanPriority 0
+            }
+
+            # 调用::TestCenter::SetupVlan创建子接口
+            set vlanName vlan_$routerName
+            if {[catch {set res [TestCenter::SetupVlan $portName $vlanName -VlanId $VlanId -VlanPriority $VlanPriority]} err] == 1} {
+
+                set msg "调用TestCenter::SetupVlan发生异常，错误信息为: $err ."
+                LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
+                set nRet $::ATT_TESTCENTER_FAIL
+                break
+            }
+            # 判断执行结果
+            if {[lindex $res 0] != $TestCenter::ExpectSuccess} {
+
+                set msg [lindex $res 1]
+                LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
+                set nRet $::ATT_TESTCENTER_FAIL
+                break
+            }
+            LOG::DebugInfo $func $::ATTTestCenter::__FILE__  "创建Vlan子接口成功。"
+            set IntName $vlanName
+        }
+
+        # 判断是否要设置RouterId
+        set index [lsearch -nocase $args -RouterId]
+        if {$index != -1} {
+
+            set RouterId [lindex $args [expr $index + 1]]
+            set args [lreplace $args $index [expr $index + 1]]
+            set argsSetupRouter [list -RouterId $RouterId]
+        }
+
+        # 调用::TestCenter::SetupRouter创建DHCP Server
+        if {[catch {set res [TestCenter::SetupRouter $IntName $routerName DHCPServer $argsSetupRouter]} err] == 1} {
+
+            set msg "调用TestCenter::发生异常，错误信息为: $err ."
+            LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
+            set nRet $::ATT_TESTCENTER_FAIL
+            break
+        }
+        # 判断执行结果
+        if {[lindex $res 0] != $TestCenter::ExpectSuccess} {
+
+            set msg [lindex $res 1]
+            LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
+            set nRet $::ATT_TESTCENTER_FAIL
+            break
+        }
+
+        # 调用::TestCenter::SetupDHCPServer创建DHCP Server
+		if {[catch {set res [TestCenter::SetupDHCPServer $routerName $args]} err] == 1} {
+
+			set msg "调用TestCenter::SetupDHCPServer发生异常，错误信息为: $err ."
+			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
+			set nRet $::ATT_TESTCENTER_FAIL
+			break
+		}
+		# 判断执行结果
+		if {[lindex $res 0] != $TestCenter::ExpectSuccess} {
+
+			set msg [lindex $res 1]
+			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
+			set nRet $::ATT_TESTCENTER_FAIL
+			break
+		} else {
+
+			set msg [lindex $res 1]
+			LOG::DebugInfo $func $::ATTTestCenter::__FILE__  $msg
+
+            # set msg display to user
+            set msg "在端口$portName 创建$routerName 成功！"
+		}
+	}
+
+	return [list array [list [list int $nRet] [list string $msg]]]
+}
+
+
+#*******************************************************************************
+#Function:    ::ATTTestCenter::EnableDHCPServer {routerName}
+#Description:   开启DHCP Server，开始协议仿真
+#Calls:   无
+#Data Accessed:  无
+#Data Updated:  无
+#Input:
+#    routerName   表示要开始协议仿真的DHCP Server名称
+#
+#Output:         无
+#Return:
+#    $ATT_TESTCENTER_SUC  $msg        表示成功
+#    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
+#    其他值                           表示失败
+#
+#Others:   无
+#*******************************************************************************
+proc ::ATTTestCenter::EnableDHCPServer {routerName } {
+
+    set nRet $::ATT_TESTCENTER_SUC
+	set func [::__FUNC__]
+	set msg  ""
+
+    foreach once {once} {
+
+        # 调用::TestCenter::EnableDHCPServer开启DHCP Server仿真
+        if {[catch {set res [TestCenter::EnableDHCPServer $routerName]} err] == 1} {
+
+			set msg "调用TestCenter::EnableDHCPServer 发生异常，错误信息为: $err ."
+			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
+			set nRet $::ATT_TESTCENTER_FAIL
+			break
+		}
+        # 判断执行结果
+        if {[lindex $res 0] != $TestCenter::ExpectSuccess} {
+
+			set msg [lindex $res 1]
+			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
+			set nRet $::ATT_TESTCENTER_FAIL
+			break
+		} else {
+
+			set msg [lindex $res 1]
+			LOG::DebugInfo $func $::ATTTestCenter::__FILE__  $msg
+        }
+    }
+
+    return [list array [list [list int $nRet] [list string $msg]]]
+}
+
+
+#*******************************************************************************
+#Function:    ::ATTTestCenter::DisableDHCPServer {routerName}
+#Description:   关闭DHCP Server，停止协议仿真
+#Calls:   无
+#Data Accessed:  无
+#Data Updated:  无
+#Input:
+#    routerName   表示要停止协议仿真的DHCP Server名称
+#
+#Output:         无
+#Return:
+#    $ATT_TESTCENTER_SUC  $msg        表示成功
+#    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
+#    其他值                           表示失败
+#
+#Others:   无
+#*******************************************************************************
+proc ::ATTTestCenter::DisableDHCPServer {routerName } {
+
+    set nRet $::ATT_TESTCENTER_SUC
+	set func [::__FUNC__]
+	set msg  ""
+
+    foreach once {once} {
+
+        # 调用::TestCenter::DisableDHCPServer关闭DHCP Server仿真
+        if {[catch {set res [TestCenter::DisableDHCPServer $routerName]} err] == 1} {
+
+			set msg "调用TestCenter::DisableDHCPServer 发生异常，错误信息为: $err ."
+			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
+			set nRet $::ATT_TESTCENTER_FAIL
+			break
+		}
+        # 判断执行结果
+        if {[lindex $res 0] != $TestCenter::ExpectSuccess} {
+
+			set msg [lindex $res 1]
+			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
+			set nRet $::ATT_TESTCENTER_FAIL
+			break
+		} else {
+
+			set msg [lindex $res 1]
+			LOG::DebugInfo $func $::ATTTestCenter::__FILE__  $msg
+        }
+    }
+
+    return [list array [list [list int $nRet] [list string $msg]]]
 }
 
 
@@ -1778,13 +2029,13 @@ proc ::ATTTestCenter::StartARPStudy {srcHost {dstHost ""} {retries "3"} {interva
 #Calls:   无
 #Data Accessed:  无
 #Data Updated:  无
-#Input:   
+#Input:
 #    portName   表示需要创建host的端口名，这里的端口名是预约端口时指定的名字
 #    hostName   表示需要创建的host的名字。该名字用于后面对该host的其他操作
 #    args       表示需要创建的IGMP host的属性列表。其格式为{-option value}.host的属性有：
 #       -SrcMac    表示源MAC，创建多个host时，默认值依次增1，默认为00:10:94:00:00:02
 #       -SrcMacStep 表示源MAC的变化步长，步长从MAC地址的最后一位依次增加，默认为1
-#       -Ipv4Addr   表示Host起始IPv4地址，默认为192.85.1.3 
+#       -Ipv4Addr   表示Host起始IPv4地址，默认为192.85.1.3
 #       -Ipv4AddrGateway  表示GateWay的IPv4地址，默认为192.85.1.1
 #       -Ipv4AddrPrefixLen  表示Host IPv4地址Prefix长度，默认为24
 #       -Count              表示Host IP、MAC地址个数，默认为1
@@ -1801,7 +2052,7 @@ proc ::ATTTestCenter::StartARPStudy {srcHost {dstHost ""} {retries "3"} {interva
 #       -Ipv4DontFragment          指明当报文长度大于MTU是是否需要分片，默认为FALSE
 #
 #Output:         无
-#Return:  
+#Return:
 #    $ATT_TESTCENTER_SUC  $msg        表示成功
 #    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
 #    其他值                           表示失败
@@ -1814,47 +2065,47 @@ proc ::ATTTestCenter::CreateIGMPHost {portName hostName args} {
 	set func [::__FUNC__]
 	set msg  ""
 	set IntName $portName
-	
+
 	foreach once {once} {
-		
+
 		# 去掉args外层{}
         if {[llength $args] == 1} {
             set args [lindex $args 0]
         }
-		
+
 		# 判断是否要添加vlan
         set index [lsearch -nocase $args -EnableVlan]
         if {$index != -1} {
-            
+
             set EnableVlan [lindex $args [expr $index + 1]]
             set args [lreplace $args $index [expr $index + 1]]
         } else  {
             set EnableVlan disable
         }
-        
+
         # 如果要添加vlan，需要先创建vlan子接口，然后再用子接口创建host
         if {[string tolower $EnableVlan] == "enable"} {
             # 获取子接口的配置信息
-            set index [lsearch -nocase $args -VlanId] 
+            set index [lsearch -nocase $args -VlanId]
             if {$index != -1} {
                 set VlanId [lindex $args [expr $index + 1]]
                 set args [lreplace $args $index [expr $index + 1]]
             } else  {
                 set VlanId 100
             }
-            
-            set index [lsearch -nocase $args -VlanPriority] 
+
+            set index [lsearch -nocase $args -VlanPriority]
             if {$index != -1} {
                 set VlanPriority [lindex $args [expr $index + 1]]
                 set args [lreplace $args $index [expr $index + 1]]
             } else  {
                 set VlanPriority 0
             }
-            
+
             # 调用::TestCenter::SetupVlan创建子接口
             set vlanName vlan_$hostName
             if {[catch {set res [TestCenter::SetupVlan $portName $vlanName -VlanId $VlanId -VlanPriority $VlanPriority]} err] == 1} {
-			
+
                 set msg "调用TestCenter::SetupVlan发生异常，错误信息为: $err ."
                 LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
                 set nRet $::ATT_TESTCENTER_FAIL
@@ -1862,7 +2113,7 @@ proc ::ATTTestCenter::CreateIGMPHost {portName hostName args} {
             }
             # 判断执行结果
             if {[lindex $res 0] != $TestCenter::ExpectSuccess} {
-                
+
                 set msg [lindex $res 1]
                 LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
                 set nRet $::ATT_TESTCENTER_FAIL
@@ -1871,10 +2122,10 @@ proc ::ATTTestCenter::CreateIGMPHost {portName hostName args} {
             LOG::DebugInfo $func $::ATTTestCenter::__FILE__  "创建Vlan子接口成功。"
             set IntName $vlanName
         }
-        
+
 		# 调用::TestCenter::SetupHost创建host
 		if {[catch {set res [TestCenter::SetupHost $IntName $hostName -HostType IgmpHost]} err] == 1} {
-			
+
 			set msg "调用TestCenter::SetupHost发生异常，错误信息为: $err ."
 			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
 			set nRet $::ATT_TESTCENTER_FAIL
@@ -1882,16 +2133,16 @@ proc ::ATTTestCenter::CreateIGMPHost {portName hostName args} {
 		}
 		# 判断执行结果
 		if {[lindex $res 0] != $TestCenter::ExpectSuccess} {
-			
+
 			set msg [lindex $res 1]
 			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
 			set nRet $::ATT_TESTCENTER_FAIL
 			break
-		} 
-		
+		}
+
 		# 调用::TestCenter::SetupIGMPHost创建IGMP host
 		if {[catch {set res [TestCenter::SetupIGMPHost $hostName $args]} err] == 1} {
-			
+
 			set msg "调用TestCenter::SetupIGMPHost发生异常，错误信息为: $err ."
 			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
 			set nRet $::ATT_TESTCENTER_FAIL
@@ -1899,21 +2150,21 @@ proc ::ATTTestCenter::CreateIGMPHost {portName hostName args} {
 		}
 		# 判断执行结果
 		if {[lindex $res 0] != $TestCenter::ExpectSuccess} {
-			
+
 			set msg [lindex $res 1]
 			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
 			set nRet $::ATT_TESTCENTER_FAIL
 			break
 		} else {
-			
+
 			set msg [lindex $res 1]
 			LOG::DebugInfo $func $::ATTTestCenter::__FILE__  $msg
-            
+
             # set msg display to user
             set msg "在端口$portName 创建$hostName 成功！"
 		}
 	}
-	
+
 	return [list array [list [list int $nRet] [list string $msg]]]
 }
 
@@ -1938,7 +2189,7 @@ proc ::ATTTestCenter::CreateIGMPHost {portName hostName args} {
 #       -SrcIncrement     表示主机 IP 地址增幅（IGMPv3），取值范围：32位整数，默认为1
 #       -SrcPrefixLen     表示主机 IP 地址前缀长度（IGMPv3），取值范围：1到32，默认为24
 #Output:         无
-#Return:  
+#Return:
 #    $ATT_TESTCENTER_SUC  $msg        表示成功
 #    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
 #    其他值                           表示失败
@@ -1946,16 +2197,16 @@ proc ::ATTTestCenter::CreateIGMPHost {portName hostName args} {
 #Others:   无
 #*******************************************************************************
 proc ::ATTTestCenter::SetupIGMPGroupPool {hostName groupPoolName startIP args} {
-	
+
 	set nRet $::ATT_TESTCENTER_SUC
 	set func [::__FUNC__]
 	set msg  ""
-	
+
 	foreach once {once} {
-		
+
 		# 调用::TestCenter::SetupIGMPGroupPool创建IGMP GroupPool
 		if {[catch {set res [TestCenter::SetupIGMPGroupPool $hostName $groupPoolName $startIP $args]} err] == 1} {
-			
+
 			set msg "调用TestCenter::SetupIGMPGroupPool发生异常，错误信息为: $err ."
 			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
 			set nRet $::ATT_TESTCENTER_FAIL
@@ -1963,21 +2214,21 @@ proc ::ATTTestCenter::SetupIGMPGroupPool {hostName groupPoolName startIP args} {
 		}
 		# 判断执行结果
 		if {[lindex $res 0] != $TestCenter::ExpectSuccess} {
-			
+
 			set msg [lindex $res 1]
 			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
 			set nRet $::ATT_TESTCENTER_FAIL
 			break
 		} else {
-			
+
 			set msg [lindex $res 1]
 			LOG::DebugInfo $func $::ATTTestCenter::__FILE__  $msg
-            
+
             # set msg display to user
             set msg "在$hostName 创建$groupPoolName 成功！"
 		}
 	}
-	
+
 	return [list array [list [list int $nRet] [list string $msg]]]
 }
 
@@ -1993,7 +2244,7 @@ proc ::ATTTestCenter::SetupIGMPGroupPool {hostName groupPoolName startIP args} {
 #    groupPoolList 表示IGMP Group 的名称标识列表,不指定表示针对所有group
 #
 #Output:         无
-#Return:  
+#Return:
 #    $ATT_TESTCENTER_SUC  $msg        表示成功
 #    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
 #    其他值                           表示失败
@@ -2001,16 +2252,16 @@ proc ::ATTTestCenter::SetupIGMPGroupPool {hostName groupPoolName startIP args} {
 #Others:   无
 #*******************************************************************************
 proc ::ATTTestCenter::SendIGMPLeave {hostName {groupPoolList ""}} {
-	
+
 	set nRet $::ATT_TESTCENTER_SUC
 	set func [::__FUNC__]
 	set msg  ""
-	
+
 	foreach once {once} {
-		
+
 		# 调用::TestCenter::SendIGMPLeave
 		if {[catch {set res [TestCenter::SendIGMPLeave $hostName $groupPoolList]} err] == 1} {
-			
+
 			set msg "调用TestCenter::SendIGMPLeave发生异常，错误信息为: $err ."
 			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
 			set nRet $::ATT_TESTCENTER_FAIL
@@ -2018,18 +2269,18 @@ proc ::ATTTestCenter::SendIGMPLeave {hostName {groupPoolList ""}} {
 		}
 		# 判断执行结果
 		if {[lindex $res 0] != $TestCenter::ExpectSuccess} {
-			
+
 			set msg [lindex $res 1]
 			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
 			set nRet $::ATT_TESTCENTER_FAIL
 			break
 		} else {
-			
+
 			set msg [lindex $res 1]
 			LOG::DebugInfo $func $::ATTTestCenter::__FILE__  $msg
 		}
 	}
-	
+
 	return [list array [list [list int $nRet] [list string $msg]]]
 }
 
@@ -2045,7 +2296,7 @@ proc ::ATTTestCenter::SendIGMPLeave {hostName {groupPoolList ""}} {
 #    groupPoolList 表示IGMP Group 的名称标识列表,不指定表示针对所有group
 #
 #Output:         无
-#Return:  
+#Return:
 #    $ATT_TESTCENTER_SUC  $msg        表示成功
 #    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
 #    其他值                           表示失败
@@ -2053,16 +2304,16 @@ proc ::ATTTestCenter::SendIGMPLeave {hostName {groupPoolList ""}} {
 #Others:   无
 #*******************************************************************************
 proc ::ATTTestCenter::SendIGMPReport {hostName {groupPoolList ""}} {
-	
+
 	set nRet $::ATT_TESTCENTER_SUC
 	set func [::__FUNC__]
 	set msg  ""
-	
+
 	foreach once {once} {
-		
+
 		# 调用::TestCenter::SendIGMPReport
 		if {[catch {set res [TestCenter::SendIGMPReport $hostName $groupPoolList]} err] == 1} {
-			
+
 			set msg "调用TestCenter::SendIGMPReport发生异常，错误信息为: $err ."
 			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
 			set nRet $::ATT_TESTCENTER_FAIL
@@ -2070,18 +2321,18 @@ proc ::ATTTestCenter::SendIGMPReport {hostName {groupPoolList ""}} {
 		}
 		# 判断执行结果
 		if {[lindex $res 0] != $TestCenter::ExpectSuccess} {
-			
+
 			set msg [lindex $res 1]
 			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
 			set nRet $::ATT_TESTCENTER_FAIL
 			break
 		} else {
-			
+
 			set msg [lindex $res 1]
 			LOG::DebugInfo $func $::ATTTestCenter::__FILE__  $msg
 		}
 	}
-	
+
 	return [list array [list [list int $nRet] [list string $msg]]]
 }
 
@@ -2093,14 +2344,14 @@ proc ::ATTTestCenter::SendIGMPReport {hostName {groupPoolList ""}} {
 #Data Accessed:  无
 #Data Updated:  无
 #Input:
-#    portName        表示需要创建router的端口名，这里的端口名是预约端口时指定的名字  
+#    portName        表示需要创建router的端口名，这里的端口名是预约端口时指定的名字
 #    routerName      表示要配置的IGMP Router名
 #    routerIp        表示 IGMP Router 的接口 IPv4 地址
 #    args            表示IGMP router的属性列表,格式为{-option value}.具体属性描述如下：
 #       -SrcMac      表示源Mac，创建多个Router时，默认值按照步长1递增
 #       -ProtocolType       表示Protocol的类型。合法值：IGMPv1/IGMPv2/IGMPv3。默认为IGMPv2
 #       -IgnoreV1Reports    指明是否忽略接收到的 IGMPv1 Host的报文，默认为False
-#       -Ipv4DontFragment   指明当报文长度大于 MTU 时，是否进行分片，默认为False 
+#       -Ipv4DontFragment   指明当报文长度大于 MTU 时，是否进行分片，默认为False
 #       -LastMemberQueryCount  表示在认定组中没有成员之前发送的特定组查询的次数，默认为2
 #       -LastMemberQueryInterval  表示在认定组中没有成员之前发送指定组查询报文的 时间间隔（单位 ms），默认为1000
 #       -QueryInterval            表示发送查询报文的时间间隔（单位 s），，默认为32
@@ -2109,7 +2360,7 @@ proc ::ATTTestCenter::SendIGMPReport {hostName {groupPoolList ""}} {
 #       -Active                表示IGMP Router会话是否激活，默认为TRUE
 #
 #Output:         无
-#Return:  
+#Return:
 #    $ATT_TESTCENTER_SUC  $msg        表示成功
 #    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
 #    其他值                           表示失败
@@ -2117,55 +2368,55 @@ proc ::ATTTestCenter::SendIGMPReport {hostName {groupPoolList ""}} {
 #Others:   无
 #*******************************************************************************
 proc ::ATTTestCenter::CreateIGMPRouter {portName routerName routerIp args} {
-	
+
     set nRet $::ATT_TESTCENTER_SUC
 	set func [::__FUNC__]
 	set msg  ""
-	
+
 	foreach once {once} {
-		
+
 		# 调用::TestCenter::SetupRouter创建router
 		if {[catch {set res [TestCenter::SetupRouter $portName $routerName IgmpRouter]} err] == 1} {
-			
+
 			set msg "调用TestCenter::SetupRouter发生异常，错误信息为: $err ."
 			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
 			set nRet $::ATT_TESTCENTER_FAIL
 			break
 		}
-		# 判断执行结果 
+		# 判断执行结果
 		if {[lindex $res 0] != $TestCenter::ExpectSuccess} {
-			
+
 			set msg [lindex $res 1]
 			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
 			set nRet $::ATT_TESTCENTER_FAIL
 			break
 		}
-		
+
 		# 调用::TestCenter::SetupIGMPRouter创建IGMP Router
 		if {[catch {set res [TestCenter::SetupIGMPRouter $routerName $routerIp $args]} err] == 1} {
-			
+
 			set msg "调用TestCenter::SetupIGMPRouter发生异常，错误信息为: $err ."
 			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
 			set nRet $::ATT_TESTCENTER_FAIL
 			break
 		}
-		# 判断执行结果 
+		# 判断执行结果
 		if {[lindex $res 0] != $TestCenter::ExpectSuccess} {
-			
+
 			set msg [lindex $res 1]
 			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
 			set nRet $::ATT_TESTCENTER_FAIL
 			break
 		} else {
-			
+
 			set msg [lindex $res 1]
 			LOG::DebugInfo $func $::ATTTestCenter::__FILE__  $msg
-            
+
             # set msg display to user
             set msg "在端口$portName 创建$routerName 成功！"
 		}
 	}
-	
+
 	return [list array [list [list int $nRet] [list string $msg]]]
 }
 
@@ -2180,7 +2431,7 @@ proc ::ATTTestCenter::CreateIGMPRouter {portName routerName routerIp args} {
 #    routerName      表示要开始通用IGMP查询的IGMP Router名
 #
 #Output:         无
-#Return:  
+#Return:
 #    $ATT_TESTCENTER_SUC  $msg        表示成功
 #    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
 #    其他值                           表示失败
@@ -2188,16 +2439,16 @@ proc ::ATTTestCenter::CreateIGMPRouter {portName routerName routerIp args} {
 #Others:   无
 #*******************************************************************************
 proc ::ATTTestCenter::StartIGMPRouterQuery {routerName} {
-	
+
 	set nRet $::ATT_TESTCENTER_SUC
 	set func [::__FUNC__]
 	set msg  ""
-	
+
 	foreach once {once} {
-		
+
 		# 调用::TestCenter::StartIGMPRouterQuery
 		if {[catch {set res [TestCenter::StartIGMPRouterQuery $routerName]} err] == 1} {
-			
+
 			set msg "调用TestCenter::StartIGMPRouterQuery发生异常，错误信息为: $err ."
 			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
 			set nRet $::ATT_TESTCENTER_FAIL
@@ -2205,19 +2456,19 @@ proc ::ATTTestCenter::StartIGMPRouterQuery {routerName} {
 		}
 		# 判断执行结果
 		if {[lindex $res 0] != $TestCenter::ExpectSuccess} {
-			
+
 			set msg [lindex $res 1]
 			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
 			set nRet $::ATT_TESTCENTER_FAIL
 			break
 		} else {
-			
+
 			set msg [lindex $res 1]
 			LOG::DebugInfo $func $::ATTTestCenter::__FILE__  $msg
 		}
 	}
-	
-	return [list array [list [list int $nRet] [list string $msg]]]	
+
+	return [list array [list [list int $nRet] [list string $msg]]]
 }
 
 
@@ -2230,7 +2481,7 @@ proc ::ATTTestCenter::StartIGMPRouterQuery {routerName} {
 #Input:
 #    routerName      表示要开始通用IGMP查询的IGMP Router名
 #Output:         无
-#Return:  
+#Return:
 #    $ATT_TESTCENTER_SUC  $msg        表示成功
 #    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
 #    其他值                           表示失败
@@ -2238,16 +2489,16 @@ proc ::ATTTestCenter::StartIGMPRouterQuery {routerName} {
 #Others:   无
 #*******************************************************************************
 proc ::ATTTestCenter::StopIGMPRouterQuery {routerName} {
-	
+
 	set nRet $::ATT_TESTCENTER_SUC
 	set func [::__FUNC__]
 	set msg  ""
-	
+
 	foreach once {once} {
-		
+
 		# 调用::TestCenter::StopIGMPRouterQuery
 		if {[catch {set res [TestCenter::StopIGMPRouterQuery $routerName]} err] == 1} {
-			
+
 			set msg "调用TestCenter::StopIGMPRouterQuery发生异常，错误信息为: $err ."
 			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
 			set nRet $::ATT_TESTCENTER_FAIL
@@ -2265,8 +2516,8 @@ proc ::ATTTestCenter::StopIGMPRouterQuery {routerName} {
 			LOG::DebugInfo $func $::ATTTestCenter::__FILE__  $msg
 		}
 	}
-	
-	return [list array [list [list int $nRet] [list string $msg]]]	
+
+	return [list array [list [list int $nRet] [list string $msg]]]
 }
 
 
@@ -2276,10 +2527,10 @@ proc ::ATTTestCenter::StopIGMPRouterQuery {routerName} {
 #Calls:   无
 #Data Accessed:  无
 #Data Updated:  无
-#Input:   
+#Input:
 #       path  xml文件保存的路径
-#Output:     
-#Return:  
+#Output:
+#Return:
 #    $ATT_TESTCENTER_SUC  $msg        表示成功
 #    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
 #    其他值                           表示失败
@@ -2287,13 +2538,13 @@ proc ::ATTTestCenter::StopIGMPRouterQuery {routerName} {
 #Others:   无
 #*******************************************************************************
 proc ::ATTTestCenter::SaveConfigAsXML {path} {
-	
+
 	set nRet $::ATT_TESTCENTER_SUC
 	set func [::__FUNC__]
 	set msg  ""
-	
+
 	foreach once {once} {
-		
+
 		# 调用::TestCenter::SaveConfigAsXML
 		if {[catch {set res [TestCenter::SaveConfig $path]} err] == 1} {
 			set msg "调用TestCenter::SaveConfigAsXML发生异常，错误信息为: $err ."
@@ -2301,21 +2552,21 @@ proc ::ATTTestCenter::SaveConfigAsXML {path} {
 			set nRet $::ATT_TESTCENTER_FAIL
 			break
 		}
-		
+
 		if {[lindex $res 0] != $TestCenter::ExpectSuccess} {
-                
+
 			set msg [lindex $res 1]
 			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
 			set nRet $::ATT_TESTCENTER_FAIL
 			break
 		} else {
-                
+
 			set nRet $::ATT_TESTCENTER_SUC
 			set msg [lindex $res 1]
 			LOG::DebugInfo $func $::ATTTestCenter::__FILE__  $msg
 		}
 	}
-	
+
 	return [list array [list [list int $nRet] [list string $msg]]]
 }
 
@@ -2326,11 +2577,11 @@ proc ::ATTTestCenter::SaveConfigAsXML {path} {
 #Calls:   无
 #Data Accessed:  无
 #Data Updated:  无
-#Input:   
+#Input:
 #       portName  端口名
 #       schedulingMode 数据流的调度模式，取值范围为：PORT_BASED | RATE_BASED | PRIORITY_BASED，默认为RATE_BASED
-#Output:     
-#Return:  
+#Output:
+#Return:
 #    $ATT_TESTCENTER_SUC  $msg        表示成功
 #    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
 #    其他值                           表示失败
@@ -2338,16 +2589,16 @@ proc ::ATTTestCenter::SaveConfigAsXML {path} {
 #Others:   无
 #*******************************************************************************
 proc ::ATTTestCenter::SetStreamSchedulingMode {portName {schedulingMode RATE_BASED}} {
-	
+
 	set nRet $::ATT_TESTCENTER_SUC
 	set func [::__FUNC__]
 	set msg  ""
-	
+
 	foreach once {once} {
-		
+
 		# 调用::TestCenter::SetStreamSchedulingMode设置数据流的调度模式
 		if {[catch {set res [TestCenter::SetStreamSchedulingMode $portName $schedulingMode]} err] == 1} {
-			
+
 			set msg "调用TestCenter::SetStreamSchedulingMode发生异常，错误信息为: $err ."
 			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
 			set nRet $::ATT_TESTCENTER_FAIL
@@ -2355,17 +2606,17 @@ proc ::ATTTestCenter::SetStreamSchedulingMode {portName {schedulingMode RATE_BAS
 		}
 		# 判断执行结果
 		if {[lindex $res 0] != $TestCenter::ExpectSuccess} {
-			
+
 			set nRet $::ATT_TESTCENTER_FAIL
 			set msg [lindex $res 1]
 			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
 		} else {
-			
+
 			set msg [lindex $res 1]
 			LOG::DebugInfo $func $::ATTTestCenter::__FILE__  $msg
 		}
 	}
-	
+
 	return [list array [list [list int $nRet] [list string $msg]]]
 }
 
@@ -2376,10 +2627,10 @@ proc ::ATTTestCenter::SetStreamSchedulingMode {portName {schedulingMode RATE_BAS
 #Calls:   无
 #Data Accessed:  无
 #Data Updated:  无
-#Input:   
+#Input:
 #      useless    没有用的参数，仅仅是为了xmlrpc调用格式的需要，必须传参
-#Output:     
-#Return:  
+#Output:
+#Return:
 #    $ATT_TESTCENTER_SUC  $msg        表示成功
 #    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
 #    其他值                           表示失败
@@ -2387,13 +2638,13 @@ proc ::ATTTestCenter::SetStreamSchedulingMode {portName {schedulingMode RATE_BAS
 #Others:   无
 #*******************************************************************************
 proc ::ATTTestCenter::CleanupTest {{useless ""}} {
-	
+
 	set nRet $::ATT_TESTCENTER_SUC
 	set func [::__FUNC__]
 	set msg  ""
-	
+
 	foreach once {once} {
-		
+
 		# 调用::TestCenter::CleanupTest
 		if {[catch {set res [TestCenter::CleanupTest]} err] == 1} {
 			set msg "调用TestCenter::CleanupTest发生异常，错误信息为: $err ."
@@ -2401,7 +2652,7 @@ proc ::ATTTestCenter::CleanupTest {{useless ""}} {
 			set nRet $::ATT_TESTCENTER_FAIL
 			break
 		}
-		
+
 		if {[lindex $res 0] != $TestCenter::ExpectSuccess} {
 			set msg [lindex $res 1]
 			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
@@ -2411,12 +2662,12 @@ proc ::ATTTestCenter::CleanupTest {{useless ""}} {
 			set nRet $::ATT_TESTCENTER_SUC
 			set msg [lindex $res 1]
 			LOG::DebugInfo $func $::ATTTestCenter::__FILE__  $msg
-			
+
 			# 删除备份的预约成功的端口名
 			set ::ATTTestCenter::reservePort ""
 		}
 	}
-	
+
 	return [list array [list [list int $nRet] [list string $msg]]]
 }
 
@@ -2428,8 +2679,8 @@ proc ::ATTTestCenter::CleanupTest {{useless ""}} {
 #Data Accessed:  无
 #Data Updated:  无
 #Input:   无
-#Output:     
-#Return:  
+#Output:
+#Return:
 #    $ATT_TESTCENTER_SUC  $msg        表示成功
 #    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
 #    其他值                           表示失败
@@ -2437,29 +2688,29 @@ proc ::ATTTestCenter::CleanupTest {{useless ""}} {
 #Others:   无
 #*******************************************************************************
 proc ::ATTTestCenter::SetupStaEngine {} {
-	
+
 	set nRet $::ATT_TESTCENTER_SUC
 	set func [::__FUNC__]
 	set msg  ""
-	
+
 	foreach once {once} {
-		
+
 		# 获取需要统计的端口列表
 		set tmpPortList $::ATTTestCenter::reservePort
-		
+
 		# 准备统计引擎
 		foreach portName $tmpPortList {
 			# 针对每一个端口生成统计引擎StaEngine对象名，portName_StaEngine
 			set StaEngineName $portName\_StaEngine
-			
+
 			# 检查StaEngine对象是否已存在
 			set isExistFlag [TestCenter::IsObjectExist $StaEngineName]
-			
+
 			# StaEngine对象不存在，创建新的对象
 			if {$isExistFlag == 0} {
 				# 调用::TestCenter::SetupStaEngine创建StaEngine对象
 				if {[catch {set res [TestCenter::SetupStaEngine $portName $StaEngineName ] } err] == 1} {
-					
+
 					set msg "调用TestCenter::SetupStaEngine发生异常，错误信息为: $err ."
 					LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
 					set nRet $::ATT_TESTCENTER_FAIL
@@ -2471,20 +2722,20 @@ proc ::ATTTestCenter::SetupStaEngine {} {
 					LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
 					set nRet $::ATT_TESTCENTER_FAIL
 					break
-				} 
+				}
 			}
 		}
-		
+
 		# 如果创建统计引擎失败，退出循环，返回失败
 		if {$nRet == $::ATT_TESTCENTER_FAIL} {
 			break
 		}
-		
+
 		# 开启统计引擎
 		foreach portName $tmpPortList {
 			# 调用::TestCenter::StartStaEngine开启统计引擎
 			if {[catch {set res [TestCenter::StartStaEngine $portName] } err] == 1} {
-				
+
 				set msg "调用TestCenter::StartStaEngine发生异常，错误信息为: $err ."
 				LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
 				set nRet $::ATT_TESTCENTER_FAIL
@@ -2492,20 +2743,20 @@ proc ::ATTTestCenter::SetupStaEngine {} {
 			}
 			# 判断执行结果
 			if {[lindex $res 0] != $TestCenter::ExpectSuccess} {
-				
+
 				set msg [lindex $res 1]
 				LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
 				set nRet $::ATT_TESTCENTER_FAIL
 				break
-			} 
+			}
 		}
-		
+
 		# 如果开启统计引擎失败，退出循环，返回失败
 		if {$nRet == $::ATT_TESTCENTER_FAIL} {
 			break
 		}
 	}
-	
+
 	return [list $nRet $msg]
 }
 
@@ -2516,10 +2767,10 @@ proc ::ATTTestCenter::SetupStaEngine {} {
 #Calls:   无
 #Data Accessed:  无
 #Data Updated:  无
-#Input:   
+#Input:
 #      useless    没有用的参数，仅仅是为了xmlrpc调用格式的需要，必须传参
-#Output:     
-#Return:  
+#Output:
+#Return:
 #    $ATT_TESTCENTER_SUC  $msg        表示成功
 #    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
 #    其他值                           表示失败
@@ -2527,28 +2778,23 @@ proc ::ATTTestCenter::SetupStaEngine {} {
 #Others:   无
 #*******************************************************************************
 proc ::ATTTestCenter::CheckServerIsStart {{useless ""}} {
-	
+
 	set nRet $::ATT_TESTCENTER_SUC
 	set msg  "xmlrpc server is running..."
-	
+
 	return [list array [list [list int $nRet] [list string $msg]]]
 }
 
 
 if {[catch {
-    
-    # 由于该服务器运行在子进程中，不单独创建文件保存log    
+
+    # 由于该服务器运行在子进程中，不单独创建文件保存log
     #LOG::Start
     xmlrpc::serve 51800
     puts "start xmlrpc server successfully!"
     vwait forever
     } err] == 1} {
-				
+
     set msg "启动xmlrpc server发生异常，错误信息为: $err ."
     puts $msg
     }
-
-   
-
-
-

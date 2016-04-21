@@ -9,7 +9,7 @@
 #  日期: 2013.02.27
 #  修改记录：
 #      lana     created    2013-02-27
-#      
+#
 #***************************************************************************
 
 
@@ -27,16 +27,16 @@ set ::ATT_TESTCENTER_FAIL -1
 proc ::__FUNC__ {args} {
 
     set procName ""
-    
-    if { [catch {    
-        
+
+    if { [catch {
+
             set procName [lindex [info level -1] 0]
         }  err ] } {
-        
+
             puts "Warning:__FUNC__: $err."
         }
-    
-    return $procName 
+
+    return $procName
 }
 
 
@@ -46,9 +46,9 @@ namespace eval ::ATTTestCenter {
 
 
     set     __FILE__               ATTTestCenter.tcl
-    
+
     set     url                    "http://127.0.0.1:51800"
-} 
+}
 
 
 #*******************************************************************************
@@ -57,11 +57,11 @@ namespace eval ::ATTTestCenter {
 #Calls:  无
 #Data Accessed:   无
 #Data Updated:  无
-#Input:      
+#Input:
 #      url     表示远端xmlrpc服务器的url
-# 
+#
 #Output:   无
-#Return:  
+#Return:
 #    $ATT_TESTCENTER_SUC  $msg        表示成功
 #    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
 #    其他值                           表示失败
@@ -69,14 +69,14 @@ namespace eval ::ATTTestCenter {
 #Others:   无
 #*******************************************************************************
 proc ::ATTTestCenter::SetURL {url} {
-        
+
     set nRet $::ATT_TESTCENTER_SUC
 	set msg "set remote url success!"
-	
+
     set ::ATTTestCenter::url $url
-	
+
 	return [list $nRet $msg]
-}    
+}
 
 
 #*******************************************************************************
@@ -85,11 +85,11 @@ proc ::ATTTestCenter::SetURL {url} {
 #Calls:  无
 #Data Accessed:   无
 #Data Updated:  无
-#Input:      
+#Input:
 #      chassisAddr     表示机框地址，用于连接TestCenter的IP地址
-# 
+#
 #Output:   无
-#Return:  
+#Return:
 #    $ATT_TESTCENTER_SUC  $msg        表示成功
 #    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
 #    其他值                           表示失败
@@ -97,11 +97,11 @@ proc ::ATTTestCenter::SetURL {url} {
 #Others:   无
 #*******************************************************************************
 proc ::ATTTestCenter::ConnectChassis {chassisAddr } {
-	
+
 	# 通过xmlrpc::call调用server端的相应接口
 	if {[catch {set ret [xmlrpc::call $::ATTTestCenter::url "::ATTTestCenter::ConnectChassis" \
             [list [list string $chassisAddr] ] ]} err] == 1} {
-        
+
         set msg "调用xmlrpc::call发生异常，错误信息为: $err ."
         set nRet $::ATT_TESTCENTER_FAIL
         return [list $nRet $msg]
@@ -118,13 +118,13 @@ proc ::ATTTestCenter::ConnectChassis {chassisAddr } {
 #Calls:  无
 #Data Accessed:   无
 #Data Updated:  无
-#Input:      
+#Input:
 #      portLocation     表示端口的位置，由板卡号与端口号组成，用'/'连接。例如预约1号板卡的1号端口，则传入 "1/1"
 #      portName         指定预约端口的别名，用于后面对该端口的其他操作。
 #      portType         指定预约的端口类型。默认为"Ethernet"
 #
 #Output:   无
-#Return:  
+#Return:
 #    $ATT_TESTCENTER_SUC  $msg        表示成功
 #    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
 #    其他值                           表示失败
@@ -132,13 +132,13 @@ proc ::ATTTestCenter::ConnectChassis {chassisAddr } {
 #Others:   无
 #*******************************************************************************
 proc ::ATTTestCenter::ReservePort {portLocation portName {portType "Ethernet"}} {
-	
+
 	# 通过xmlrpc::call调用server端的相应接口
     if {[catch {set ret [xmlrpc::call $::ATTTestCenter::url "::ATTTestCenter::ReservePort" \
                                       [list [list string $portLocation] \
 									        [list string $portName] \
 											[list string $portType] ] ]} err] == 1} {
-        
+
         set msg "调用xmlrpc::call发生异常，错误信息为: $err ."
         set nRet $::ATT_TESTCENTER_FAIL
         return [list $nRet $msg]
@@ -154,7 +154,7 @@ proc ::ATTTestCenter::ReservePort {portLocation portName {portType "Ethernet"}} 
 #Calls:  无
 #Data Accessed:   无
 #Data Updated:  无
-#Input:      
+#Input:
 #      portName     表示要配置的端口的名字，这里的端口名是预约端口时指定的名字
 #      args         表示要配置的端口的属性的列表，格式为{-options value ...},端口的具体属性如下：
 #        -mediaType   表示端口介质类型，取值范围为COPPER、FIBER。默认为COPPER
@@ -167,7 +167,7 @@ proc ::ATTTestCenter::ReservePort {portLocation portName {portType "Ethernet"}} 
 #        -portMode    仅针对10G,取值范围为LAN、WAN。默认为LAN
 #
 #Output:   无
-#Return:  
+#Return:
 #    $ATT_TESTCENTER_SUC  $msg        表示成功
 #    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
 #    其他值                           表示失败
@@ -175,7 +175,7 @@ proc ::ATTTestCenter::ReservePort {portLocation portName {portType "Ethernet"}} 
 #Others:   无
 #*******************************************************************************
 proc ::ATTTestCenter::ConfigPort {portName args} {
-    
+
 	# 组建传参列表
     set tmpArgs ""
     foreach var $args {
@@ -185,7 +185,7 @@ proc ::ATTTestCenter::ConfigPort {portName args} {
     if {[catch {set ret [xmlrpc::call $::ATTTestCenter::url "::ATTTestCenter::ConfigPort" \
                                       [list [list string $portName] \
 									        [list array $tmpArgs] ] ]} err] == 1} {
-        
+
         set msg "调用xmlrpc::call发生异常，错误信息为: $err ."
         set nRet $::ATT_TESTCENTER_FAIL
         return [list $nRet $msg]
@@ -201,12 +201,12 @@ proc ::ATTTestCenter::ConfigPort {portName args} {
 #Calls:  无
 #Data Accessed:   无
 #Data Updated:  无
-#Input:      
+#Input:
 #      portName     表示要获取状态的端口的名字，这里的端口名是预约端口时指定的名字
 #      state        表示要获取端口的哪一种状态，取值范围为：PhyState,LinkState, LinkSpeed, DuplexMode
 #
 #Output:   无
-#Return:  
+#Return:
 #    $ATT_TESTCENTER_SUC  $state $msg 表示成功
 #    $ATT_TESTCENTER_FAIL "err"  $msg 表示调用函数失败
 #    其他值                           表示失败
@@ -214,12 +214,12 @@ proc ::ATTTestCenter::ConfigPort {portName args} {
 #Others:   无
 #*******************************************************************************
 proc ::ATTTestCenter::GetPortState {portName state} {
-	
+
     # 通过xmlrpc::call调用server端的相应接口
     if {[catch { set ret [xmlrpc::call $::ATTTestCenter::url "::ATTTestCenter::GetPortState" \
                                        [list [list string $portName] \
 										     [list string $state] ] ] } err] == 1} {
-        
+
         set msg "调用xmlrpc::call发生异常，错误信息为: $err ."
         set nRet $::ATT_TESTCENTER_FAIL
         return [list $nRet $msg]
@@ -230,7 +230,7 @@ proc ::ATTTestCenter::GetPortState {portName state} {
 
 
 #*******************************************************************************
-#Function:   ::ATTTestCenter::CreateProfile {portName profileName args} 
+#Function:   ::ATTTestCenter::CreateProfile {portName profileName args}
 #Description:    创建profile, profile中设置的属性可应用于端口
 #Calls:   无
 #Data Accessed:    无
@@ -247,14 +247,14 @@ proc ::ATTTestCenter::GetPortState {portName state} {
 #        -Blocking         表示是否开启堵塞模式（Enable/Disable），默认为Disable
 #
 #Output:    无
-# Return:  
+# Return:
 #    $ATT_TESTCENTER_SUC  $msg        表示成功
 #    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
 #    其他值                           表示失败
 #Others:         无
 #*******************************************************************************
 proc ::ATTTestCenter::CreateProfile {portName profileName args} {
-	
+
 	# 组建传参列表
     set tmpArgs ""
     foreach var $args {
@@ -265,7 +265,7 @@ proc ::ATTTestCenter::CreateProfile {portName profileName args} {
                                        [list [list string $portName] \
 										     [list string $profileName] \
 											 [list array $tmpArgs] ] ]} err] == 1} {
-        
+
         set msg "调用xmlrpc::call发生异常，错误信息为: $err ."
         set nRet $::ATT_TESTCENTER_FAIL
         return [list $nRet $msg]
@@ -276,13 +276,13 @@ proc ::ATTTestCenter::CreateProfile {portName profileName args} {
 
 
 #*******************************************************************************
-#Function:    ::ATTTestCenter::CreateEmptyStream {portName streamName args} 
+#Function:    ::ATTTestCenter::CreateEmptyStream {portName streamName args}
 #Description:  创建空流，仅创建流的名字， 帧长度以及速率等属性，
 #             其他报文的内容通过 ADD PDU 的方式构造
 #Calls:   无
 #Data Accessed:  无
 #Data Updated:  无
-#Input:   
+#Input:
 #    portName     表示需要创建stream的端口名，这里的端口名是预约端口时指定的名字
 #    streamName   表示需要创建的stream的名字，该名字可用于后面对stream的其他操作
 #    args         表示流对象的属性列表，格式为{-option value ...}。具体的流对象属性如下：
@@ -293,18 +293,18 @@ proc ::ATTTestCenter::CreateProfile {portName profileName args} {
 #                     默认为fixed
 #       -FrameLenStep 表示数据帧长度的变化步长，默认为1
 #       -FrameLenCount 表示数据帧长度变化的数量，默认为1
-#       -insertsignature 指明是否在数据流中插入signature field，取值：true | false  默认为true，插入signature field 
+#       -insertsignature 指明是否在数据流中插入signature field，取值：true | false  默认为true，插入signature field
 #       -ProfileName     指明stream要使用的Profile 的名字，这里的profile必须是之前创建过的profile
 #       -FillType        指明Payload的填充方式，取值范围为CONSTANT | INCR |DECR | PRBS，默认为CONSTANT
 #       -ConstantFillPattern  当FillType为Constant的时候，相应的填充值。默认为0
 #       -EnableFcsErrorInsertion  指明是否插入CRC错误帧，取值范围为TRUE | FALSE，默认为FALSE
 #       -EnableStream  指定modifier使用stream/flow功能, 当使用stream模式时，单端口stream数不能超过32k。
-#                      取值范围TRUE | FALSE，默认为FALSE 
+#                      取值范围TRUE | FALSE，默认为FALSE
 #       -TrafficPattern 主要用于流绑定的情形（使用SrcPoolName以及DstPoolName时），
 #                        取值范围为PAIR | BACKBONE | MESH，默认为PAIR
 #
 #Output:    无
-# Return:  
+# Return:
 #    $ATT_TESTCENTER_SUC  $msg        表示成功
 #    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
 #    其他值                           表示失败
@@ -312,7 +312,7 @@ proc ::ATTTestCenter::CreateProfile {portName profileName args} {
 #Others:    无
 #*******************************************************************************
 proc ::ATTTestCenter::CreateEmptyStream {portName streamName args} {
-	
+
 	# 组建传参列表
     set tmpArgs ""
     foreach var $args {
@@ -323,7 +323,7 @@ proc ::ATTTestCenter::CreateEmptyStream {portName streamName args} {
                                        [list [list string $portName] \
 										     [list string $streamName] \
 											 [list array $tmpArgs] ] ] } err] == 1} {
-        
+
         set msg "调用xmlrpc::call发生异常，错误信息为: $err ."
         set nRet $::ATT_TESTCENTER_FAIL
         return [list $nRet $msg]
@@ -345,7 +345,7 @@ proc ::ATTTestCenter::CreateEmptyStream {portName streamName args} {
 #                     Eth | Vlan | IPV4 | TCP | UDP | MPLS | IPV6 | POS | HDLC
 #      args           表示配置属性的参数列表，格式为{-option value ...},具体参数根据报文类型有所不同。
 #Output:         无
-#Return:  
+#Return:
 #    $ATT_TESTCENTER_SUC  $msg        表示成功
 #    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
 #    其他值                           表示失败
@@ -354,7 +354,7 @@ proc ::ATTTestCenter::CreateEmptyStream {portName streamName args} {
 
 #*******************************************************************************
 proc ::ATTTestCenter::CreateHeader {headerName headerType args} {
-	
+
 	# 组建传参列表
     set tmpArgs ""
     foreach var $args {
@@ -365,7 +365,7 @@ proc ::ATTTestCenter::CreateHeader {headerName headerType args} {
                                        [list [list string $headerName] \
 										     [list string $headerType] \
 											 [list array $tmpArgs] ] ] } err] == 1} {
-        
+
         set msg "调用xmlrpc::call发生异常，错误信息为: $err ."
         set nRet $::ATT_TESTCENTER_FAIL
         return [list $nRet $msg]
@@ -387,7 +387,7 @@ proc ::ATTTestCenter::CreateHeader {headerName headerType args} {
 #                    DHCP | PIM | IGMP | PPPoE | ICMP | ARP | Custom
 #    args           表示配置属性的参数列表，格式为{-option value ...},具体参数根据报文类型有所不同。
 #Output:         无
-#Return:  
+#Return:
 #    $ATT_TESTCENTER_SUC  $msg        表示成功
 #    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
 #    其他值                           表示失败
@@ -395,7 +395,7 @@ proc ::ATTTestCenter::CreateHeader {headerName headerType args} {
 #Others:   无
 #*******************************************************************************
 proc ::ATTTestCenter::CreatePacket {packetName packetType args} {
-	
+
 	# 组建传参列表
     set tmpArgs ""
     foreach var $args {
@@ -406,13 +406,13 @@ proc ::ATTTestCenter::CreatePacket {packetName packetType args} {
                                        [list [list string $packetName] \
 										     [list string $packetType] \
 											 [list array $tmpArgs]] ] } err] == 1} {
-        
+
         set msg "调用xmlrpc::call发生异常，错误信息为: $err ."
         set nRet $::ATT_TESTCENTER_FAIL
         return [list $nRet $msg]
     }
     # xmlrpc::call返回结果格式为{{} result},其中result为调用接口实际返回值
-	return [lindex $ret 1]	
+	return [lindex $ret 1]
 }
 
 
@@ -426,7 +426,7 @@ proc ::ATTTestCenter::CreatePacket {packetName packetType args} {
 #    streamName     指定要添加PDU的steam对象,这里的streamName必须是前面已经创建好的stream名字
 #    args           表示需要添加到streamName中的PDU列表。
 #Output:         无
-#Return:  
+#Return:
 #    $ATT_TESTCENTER_SUC  $msg        表示成功
 #    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
 #    其他值                           表示失败
@@ -434,17 +434,17 @@ proc ::ATTTestCenter::CreatePacket {packetName packetType args} {
 #Others:   无
 #*******************************************************************************
 proc ::ATTTestCenter::AddPDUToStream {streamName args} {
-	
+
 	# 组建传参列表
     set tmpArgs ""
 	if {[llength $args] == 1} {
 		set tmpArgs $args
-		
+
 		# 通过xmlrpc::call调用server端的相应接口
 		if {[catch { set ret [xmlrpc::call $::ATTTestCenter::url "::ATTTestCenter::AddPDUToStream" \
 										   [list [list string $streamName] \
 												 [list string $tmpArgs] ] ]} err] == 1} {
-			
+
 			set msg "调用xmlrpc::call发生异常，错误信息为: $err ."
 			set nRet $::ATT_TESTCENTER_FAIL
 			return [list $nRet $msg]
@@ -453,18 +453,18 @@ proc ::ATTTestCenter::AddPDUToStream {streamName args} {
 		foreach var $args {
 			lappend tmpArgs [list string $var]
 		}
-		
+
 		# 通过xmlrpc::call调用server端的相应接口
 		if {[catch { set ret [xmlrpc::call $::ATTTestCenter::url "::ATTTestCenter::AddPDUToStream" \
 										   [list [list string $streamName] \
 												 [list array $tmpArgs] ] ]} err] == 1} {
-			
+
 			set msg "调用xmlrpc::call发生异常，错误信息为: $err ."
 			set nRet $::ATT_TESTCENTER_FAIL
 			return [list $nRet $msg]
 		}
 	}
-	
+
     # xmlrpc::call返回结果格式为{{} result},其中result为调用接口实际返回值
 	return [lindex $ret 1]
 }
@@ -480,7 +480,7 @@ proc ::ATTTestCenter::AddPDUToStream {streamName args} {
 #    portOrStream: 指明是清零端口的统计结果还是stream的统计结果,或者是所有的统计结果，取值范围为 port | stream | all
 #    args:    指定要清零的对象列表，可以是端口列表，也可以是数据流列表,为空表示清零所有结果
 #Output:         无
-#Return:  
+#Return:
 #    $ATT_TESTCENTER_SUC  $msg        表示成功
 #    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
 #    其他值                           表示失败
@@ -488,17 +488,17 @@ proc ::ATTTestCenter::AddPDUToStream {streamName args} {
 #Others:   无
 #*******************************************************************************
 proc ::ATTTestCenter::ClearTestResult {portOrStream args} {
-        
+
     # 组建传参列表
     set tmpArgs ""
 	if {[llength $args] == 1} {
 		set tmpArgs $args
-		
+
 		# 通过xmlrpc::call调用server端的相应接口
 		if {[catch { set ret [xmlrpc::call $::ATTTestCenter::url "::ATTTestCenter::ClearTestResult" \
 										   [list [list string $portOrStream] \
                                                  [list string $tmpArgs] ] ]} err] == 1} {
-			
+
 			set msg "调用xmlrpc::call发生异常，错误信息为: $err ."
 			set nRet $::ATT_TESTCENTER_FAIL
 			return [list $nRet $msg]
@@ -507,18 +507,18 @@ proc ::ATTTestCenter::ClearTestResult {portOrStream args} {
 		foreach var $args {
 			lappend tmpArgs [list string $var]
 		}
-		
+
 		# 通过xmlrpc::call调用server端的相应接口
 		if {[catch { set ret [xmlrpc::call $::ATTTestCenter::url "::ATTTestCenter::ClearTestResult" \
 										   [list [list string $portOrStream] \
                                                  [list array $tmpArgs] ] ]} err] == 1} {
-			
+
 			set msg "调用xmlrpc::call发生异常，错误信息为: $err ."
 			set nRet $::ATT_TESTCENTER_FAIL
 			return [list $nRet $msg]
 		}
 	}
-	
+
     # xmlrpc::call返回结果格式为{{} result},其中result为调用接口实际返回值
 	return [lindex $ret 1]
 }
@@ -530,13 +530,13 @@ proc ::ATTTestCenter::ClearTestResult {portOrStream args} {
 #Calls:   无
 #Data Accessed:  无
 #Data Updated:  无
-#Input:   
+#Input:
 #    portName   表示需要创建过滤器的端口名，这里的端口名是预约端口时指定的名字
 #    filterName 表示需要创建的过滤器名
 #    filterType  表示过滤器对象类型UDF或者Stack
 #    filterValue  表示过滤器对象的值，格式为{{FilterExpr1}{FilterExpr2}…}
 #         当FilterType为Stack时，FilterExpr 的格式为：
-#              -ProtocolField ProtocolField -min min -max max -mask mask 
+#              -ProtocolField ProtocolField -min min -max max -mask mask
 #              -ProtocolField: 指明具体的过滤字段，必选参数。ProtocolField 的具体过虑字段及说明如下：
 #                  srcMac   源 MAC 地址
 #                  dstMac   目的 MAC 地址
@@ -549,7 +549,7 @@ proc ::ATTTestCenter::ClearTestResult {portOrStream args} {
 #                  srcPort   TCP、UDP协议源端口号
 #                  dstPort   TCP、UDP协议源端口号
 #              -min：指明过滤字段的起始值。必选参数
-#              -max:指明过滤字段的最大值。可选参数，若未指定，默认值为 min 
+#              -max:指明过滤字段的最大值。可选参数，若未指定，默认值为 min
 #              -mask：指明过滤字段的掩码值。可选参数，取值与具体的字段相关。
 #         当FilterType为UDF时，FilterExpr 的格式为：
 #              -pattern pattern -offset offset  -max max -mask mask
@@ -561,7 +561,7 @@ proc ::ATTTestCenter::ClearTestResult {portOrStream args} {
 #                      获取流的实时统计比较有效。取值范围为TRUE/FALSE，默认为FALSE
 #
 #Output:         无
-#Return:  
+#Return:
 #    $ATT_TESTCENTER_SUC  $msg        表示成功
 #    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
 #    其他值                           表示失败
@@ -569,8 +569,8 @@ proc ::ATTTestCenter::ClearTestResult {portOrStream args} {
 #Others:   无
 #*******************************************************************************
 proc ::ATTTestCenter::CreateFilter {portName filterName filterType filterValue {filterOnStreamId FALSE}} {
-	
-	
+
+
 	# 通过xmlrpc::call调用server端的相应接口
     if {[catch { set ret [xmlrpc::call $::ATTTestCenter::url "::ATTTestCenter::CreateFilter" \
                                        [list [list string $portName] \
@@ -578,13 +578,13 @@ proc ::ATTTestCenter::CreateFilter {portName filterName filterType filterValue {
 											 [list string $filterType] \
 											 [list string $filterValue] \
 											 [list string $filterOnStreamId]] ] } err] == 1} {
-        
+
         set msg "调用xmlrpc::call发生异常，错误信息为: $err ."
         set nRet $::ATT_TESTCENTER_FAIL
         return [list $nRet $msg]
     }
     # xmlrpc::call返回结果格式为{{} result},其中result为调用接口实际返回值
-	return [lindex $ret 1]	
+	return [lindex $ret 1]
 }
 
 
@@ -595,14 +595,14 @@ proc ::ATTTestCenter::CreateFilter {portName filterName filterType filterValue {
 #Calls:   无
 #Data Accessed:  无
 #Data Updated:  无
-#Input:   
+#Input:
 #    portName        表示需要开启捕获报文的端口名，这里的端口名是预约端口时指定的名字
 #    savePath        表示捕获的报文保存的路径名。如果该参数为空，
 #                    则保存到默认路径下
 #    filterName      表示要过滤保存报文使用的过滤器的名字
 #
 #Output:         无
-# Return:  
+# Return:
 #    $ATT_TESTCENTER_SUC  $msg        表示成功
 #    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
 #    其他值                           表示失败
@@ -610,13 +610,13 @@ proc ::ATTTestCenter::CreateFilter {portName filterName filterType filterValue {
 #Others:   无
 #*******************************************************************************
 proc ::ATTTestCenter::StartCapture {portName {savePath ""} {filterName ""}} {
-	
+
 	# 通过xmlrpc::call调用server端的相应接口
     if {[catch { set ret [xmlrpc::call $::ATTTestCenter::url "::ATTTestCenter::StartCapture" \
                                        [list [list string $portName] \
 									         [list string $savePath] \
 	                                         [list string $filterName] ] ]} err] == 1} {
-        
+
         set msg "调用xmlrpc::call发生异常，错误信息为: $err ."
         set nRet $::ATT_TESTCENTER_FAIL
         return [list $nRet $msg]
@@ -632,11 +632,11 @@ proc ::ATTTestCenter::StartCapture {portName {savePath ""} {filterName ""}} {
 #Calls:   无
 #Data Accessed:  无
 #Data Updated:  无
-#Input:   
+#Input:
 #      portName   表示需要停止捕获报文的端口名，这里的端口名是预约端口时指定的名字
 #
 #Output:         无
-#Return:  
+#Return:
 #    $ATT_TESTCENTER_SUC  $msg        表示成功
 #    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
 #    其他值                           表示失败
@@ -644,11 +644,11 @@ proc ::ATTTestCenter::StartCapture {portName {savePath ""} {filterName ""}} {
 #Others:         无
 #*******************************************************************************
 proc ::ATTTestCenter::StopCapture {portName} {
-	
+
 	# 通过xmlrpc::call调用server端的相应接口
     if {[catch { set ret [xmlrpc::call $::ATTTestCenter::url "::ATTTestCenter::StopCapture" \
                                       [list [list string $portName] ] ]} err] == 1} {
-        
+
         set msg "调用xmlrpc::call发生异常，错误信息为: $err ."
         set nRet $::ATT_TESTCENTER_FAIL
         return [list $nRet $msg]
@@ -665,13 +665,13 @@ proc ::ATTTestCenter::StopCapture {portName} {
 #Calls:   无
 #Data Accessed:  无
 #Data Updated:  无
-#Input:   
+#Input:
 #    trafficTime     表示发流时间，单位为s,默认为0
 #    flagArp         表示是否进行ARP学习，为TRUE, 进行，为FLASE，不进行，默认为TRUE
 #    args          表示由需要发流的端口名组成的列表。为空表示所有端口 ，默认为空
 #
 #Output:         无
-#Return:  
+#Return:
 #    $ATT_TESTCENTER_SUC  $msg        表示成功
 #    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
 #    其他值                           表示失败
@@ -679,18 +679,18 @@ proc ::ATTTestCenter::StopCapture {portName} {
 #Others:   无
 #*******************************************************************************
 proc ::ATTTestCenter::TrafficOnPort {{trafficTime 0} {flagArp "TRUE"} args} {
-        
+
     # 组建传参列表
     set tmpArgs ""
 	if {[llength $args] == 1} {
 		set tmpArgs $args
-		
+
 		# 通过xmlrpc::call调用server端的相应接口
         if {[catch { set ret [xmlrpc::call $::ATTTestCenter::url "::ATTTestCenter::TrafficOnPort" \
                                           [list [list int $trafficTime] \
                                                 [list string $flagArp] \
                                                 [list string $tmpArgs] ] ]} err] == 1} {
-            
+
             set msg "调用xmlrpc::call发生异常，错误信息为: $err ."
             set nRet $::ATT_TESTCENTER_FAIL
             return [list $nRet $msg]
@@ -699,19 +699,19 @@ proc ::ATTTestCenter::TrafficOnPort {{trafficTime 0} {flagArp "TRUE"} args} {
 		foreach var $args {
 			lappend tmpArgs [list string $var]
 		}
-		
+
 		# 通过xmlrpc::call调用server端的相应接口
         if {[catch { set ret [xmlrpc::call $::ATTTestCenter::url "::ATTTestCenter::TrafficOnPort" \
                                           [list [list int $trafficTime] \
                                                 [list string $flagArp] \
                                                 [list array $tmpArgs] ] ]} err] == 1} {
-            
+
             set msg "调用xmlrpc::call发生异常，错误信息为: $err ."
             set nRet $::ATT_TESTCENTER_FAIL
             return [list $nRet $msg]
         }
 	}
-	
+
     # xmlrpc::call返回结果格式为{{} result},其中result为调用接口实际返回值
 	return [lindex $ret 1]
 }
@@ -723,11 +723,11 @@ proc ::ATTTestCenter::TrafficOnPort {{trafficTime 0} {flagArp "TRUE"} args} {
 #Calls:   无
 #Data Accessed:  无
 #Data Updated:  无
-#Input:   
+#Input:
 #    args      表示需要停止发流的端口的端口名列表。为空表示所有端口，默认为空
 #
 #Output:   无
-#Return:  
+#Return:
 #    $ATT_TESTCENTER_SUC  $msg        表示成功
 #    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
 #    其他值                           表示失败
@@ -735,16 +735,16 @@ proc ::ATTTestCenter::TrafficOnPort {{trafficTime 0} {flagArp "TRUE"} args} {
 #Others:    无
 #*******************************************************************************
 proc ::ATTTestCenter::StopTrafficOnPort {args} {
-	
+
     # 组建传参列表
     set tmpArgs ""
 	if {[llength $args] == 1} {
 		set tmpArgs $args
-		
+
 		# 通过xmlrpc::call调用server端的相应接口
         if {[catch { set ret [xmlrpc::call $::ATTTestCenter::url "::ATTTestCenter::StopTrafficOnPort" \
                                            [list [list string $tmpArgs] ] ] } err] == 1} {
-            
+
             set msg "调用xmlrpc::call发生异常，错误信息为: $err ."
             set nRet $::ATT_TESTCENTER_FAIL
             return [list $nRet $msg]
@@ -753,17 +753,17 @@ proc ::ATTTestCenter::StopTrafficOnPort {args} {
 		foreach var $args {
 			lappend tmpArgs [list string $var]
 		}
-		
+
 		# 通过xmlrpc::call调用server端的相应接口
         if {[catch { set ret [xmlrpc::call $::ATTTestCenter::url "::ATTTestCenter::StopTrafficOnPort" \
                                            [list [list array $tmpArgs] ] ] } err] == 1} {
-            
+
             set msg "调用xmlrpc::call发生异常，错误信息为: $err ."
             set nRet $::ATT_TESTCENTER_FAIL
             return [list $nRet $msg]
         }
 	}
-	
+
     # xmlrpc::call返回结果格式为{{} result},其中result为调用接口实际返回值
 	return [lindex $ret 1]
 }
@@ -775,14 +775,14 @@ proc ::ATTTestCenter::StopTrafficOnPort {args} {
 #Calls:   无
 #Data Accessed:  无
 #Data Updated:  无
-#Input:   
+#Input:
 #    portName        表示发流stream所属端口的端口对象名
 #    flagArp         表示是否进行ARP学习，为TRUE, 进行，为FLASE，不进行，默认为TRUE
 #    trafficTime     表示发流时间，单位为s，默认为0
-#    args           表示需要发流的stream的名字列表。为空表示该端口下所有流,默认为空 
+#    args           表示需要发流的stream的名字列表。为空表示该端口下所有流,默认为空
 #
 #Output:  无
-#Return:  
+#Return:
 #    $ATT_TESTCENTER_SUC  $msg        表示成功
 #    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
 #    其他值                           表示失败
@@ -790,19 +790,19 @@ proc ::ATTTestCenter::StopTrafficOnPort {args} {
 #Others:   无
 #*******************************************************************************
 proc ::ATTTestCenter::TrafficOnStream {portName {flagArp "TRUE"} {trafficTime 0} args} {
-	
+
     # 组建传参列表
     set tmpArgs ""
 	if {[llength $args] == 1} {
 		set tmpArgs $args
-		
+
 		# 通过xmlrpc::call调用server端的相应接口
         if {[catch { set ret [xmlrpc::call $::ATTTestCenter::url "::ATTTestCenter::TrafficOnStream" \
                                            [list [list string $portName] \
                                                   [list string $flagArp]\
                                                   [list int $trafficTime]\
                                                   [list string $tmpArgs] ] ]} err] == 1} {
-            
+
             set msg "调用xmlrpc::call发生异常，错误信息为: $err ."
             set nRet $::ATT_TESTCENTER_FAIL
             return [list $nRet $msg]
@@ -811,20 +811,20 @@ proc ::ATTTestCenter::TrafficOnStream {portName {flagArp "TRUE"} {trafficTime 0}
 		foreach var $args {
 			lappend tmpArgs [list string $var]
 		}
-		
+
 		# 通过xmlrpc::call调用server端的相应接口
         if {[catch { set ret [xmlrpc::call $::ATTTestCenter::url "::ATTTestCenter::TrafficOnStream" \
                                            [list [list string $portName] \
                                                   [list string $flagArp]\
                                                   [list int $trafficTime]\
                                                   [list array $tmpArgs] ] ]} err] == 1} {
-            
+
             set msg "调用xmlrpc::call发生异常，错误信息为: $err ."
             set nRet $::ATT_TESTCENTER_FAIL
             return [list $nRet $msg]
         }
 	}
-	
+
     # xmlrpc::call返回结果格式为{{} result},其中result为调用接口实际返回值
 	return [lindex $ret 1]
 }
@@ -836,12 +836,12 @@ proc ::ATTTestCenter::TrafficOnStream {portName {flagArp "TRUE"} {trafficTime 0}
 #Calls:   无
 #Data Accessed:  无
 #Data Updated:  无
-#Input:   
+#Input:
 #    portName       表示发流stream所属端口的端口对象名
 #    args          表示需要停止发流的stream的名字列表。为空表示该端口下所有流
 #
 #Output:    无
-#Return:  
+#Return:
 #    $ATT_TESTCENTER_SUC  $msg        表示成功
 #    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
 #    其他值                           表示失败
@@ -849,17 +849,17 @@ proc ::ATTTestCenter::TrafficOnStream {portName {flagArp "TRUE"} {trafficTime 0}
 #Others:    无
 #*******************************************************************************
 proc ::ATTTestCenter::StopTrafficOnStream {portName args} {
-	
+
     # 组建传参列表
     set tmpArgs ""
 	if {[llength $args] == 1} {
 		set tmpArgs $args
-		
+
 		# 通过xmlrpc::call调用server端的相应接口
         if {[catch { set ret [xmlrpc::call $::ATTTestCenter::url "::ATTTestCenter::StopTrafficOnStream" \
                                            [list [list string $portName] \
                                                  [list string $tmpArgs] ] ] } err] == 1} {
-            
+
             set msg "调用xmlrpc::call发生异常，错误信息为: $err ."
             set nRet $::ATT_TESTCENTER_FAIL
             return [list $nRet $msg]
@@ -868,18 +868,18 @@ proc ::ATTTestCenter::StopTrafficOnStream {portName args} {
 		foreach var $args {
 			lappend tmpArgs [list string $var]
 		}
-		
+
 		# 通过xmlrpc::call调用server端的相应接口
         if {[catch { set ret [xmlrpc::call $::ATTTestCenter::url "::ATTTestCenter::StopTrafficOnStream" \
                                            [list [list string $portName] \
                                                  [list array $tmpArgs] ] ] } err] == 1} {
-            
+
             set msg "调用xmlrpc::call发生异常，错误信息为: $err ."
             set nRet $::ATT_TESTCENTER_FAIL
             return [list $nRet $msg]
         }
 	}
-	
+
     # xmlrpc::call返回结果格式为{{} result},其中result为调用接口实际返回值
 	return [lindex $ret 1]
 }
@@ -891,13 +891,13 @@ proc ::ATTTestCenter::StopTrafficOnStream {portName args} {
 #Calls:   无
 #Data Accessed:  无
 #Data Updated:  无
-#Input:   
+#Input:
 #    portName         表示获取统计信息的端口名，这里的端口名是预约端口时指定的名字
 #    filterStream     表示是否过滤统计结果。为1，返回过滤过后的结果值，为0，返回过滤前的值
 #    resultPath       表示统计结果保存的路径名。如果该参数为空,则保存到默认路径下
-#   
-#Output:   无  
-#Return:  
+#
+#Output:   无
+#Return:
 #    $ATT_TESTCENTER_SUC  $msg        表示成功
 #    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
 #    其他值                           表示失败
@@ -905,13 +905,13 @@ proc ::ATTTestCenter::StopTrafficOnStream {portName args} {
 #Others:  无
 #*******************************************************************************
 proc ::ATTTestCenter::GetPortStatsSnapshot {portName {filterStream "0"} {resultPath ""}} {
-	
+
     # 通过xmlrpc::call调用server端的相应接口
     if {[catch { set ret [xmlrpc::call $::ATTTestCenter::url "::ATTTestCenter::GetPortStatsSnapshot" \
                                        [list [list string $portName] \
 										     [list string $filterStream] \
 	                                         [list string $resultPath] ] ] } err] == 1} {
-        
+
         set msg "调用xmlrpc::call发生异常，错误信息为: $err ."
         set nRet $::ATT_TESTCENTER_FAIL
         return [list $nRet $msg]
@@ -927,13 +927,13 @@ proc ::ATTTestCenter::GetPortStatsSnapshot {portName {filterStream "0"} {resultP
 #Calls:   无
 #Data Accessed:  无
 #Data Updated:  无
-#Input:   
+#Input:
 #    portName        表示获取统计信息的端口名，这里的端口名是预约端口时指定的名字
 #    streamName      表示需要统计的流的名字，这里的stream名必须是创建过的stream
 #    resultPath      表示统计结果保存的路径名。如果该参数为空,则保存到默认路径下
-#    
+#
 #Output:    无
-#Return:  
+#Return:
 #    $ATT_TESTCENTER_SUC  $msg        表示成功
 #    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
 #    其他值                           表示失败
@@ -941,13 +941,13 @@ proc ::ATTTestCenter::GetPortStatsSnapshot {portName {filterStream "0"} {resultP
 #Others:   无
 #*******************************************************************************
 proc ::ATTTestCenter::GetStreamStatsSnapshot {portName streamName {resultPath ""}} {
-	
+
     # 通过xmlrpc::call调用server端的相应接口
     if {[catch { set ret [xmlrpc::call $::ATTTestCenter::url "::ATTTestCenter::GetStreamStatsSnapshot" \
                                        [list [list string $portName] \
 									         [list string $streamName] \
 	                                         [list string $resultPath] ] ] } err] == 1} {
-        
+
         set msg "调用xmlrpc::call发生异常，错误信息为: $err ."
         set nRet $::ATT_TESTCENTER_FAIL
         return [list $nRet $msg]
@@ -963,13 +963,13 @@ proc ::ATTTestCenter::GetStreamStatsSnapshot {portName streamName {resultPath ""
 #Calls:   无
 #Data Accessed:  无
 #Data Updated:  无
-#Input:   
+#Input:
 #    portName         表示获取统计信息的端口名，这里的端口名是预约端口时指定的名字
 #    subOption        表示需要获取的统计结果子项名。如果为空，返回所有信息
 #    filterStream     表示是否过滤统计结果。为1，返回过滤过后的结果值，为0，返回过滤前的值
 #
-#Output:   无  
-#Return:  
+#Output:   无
+#Return:
 #    $ATT_TESTCENTER_SUC  $msg        表示成功
 #    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
 #    其他值                           表示失败
@@ -977,13 +977,13 @@ proc ::ATTTestCenter::GetStreamStatsSnapshot {portName streamName {resultPath ""
 #Others:  无
 #*******************************************************************************
 proc ::ATTTestCenter::GetPortStats {portName subOption {filterStream "0"}} {
-	
+
     # 通过xmlrpc::call调用server端的相应接口
     if {[catch { set ret [xmlrpc::call $::ATTTestCenter::url "::ATTTestCenter::GetPortStats" \
                                        [list [list string $portName] \
 										      [list string $filterStream]\
 											  [list string $subOption] ] ] } err] == 1} {
-        
+
         set msg "调用xmlrpc::call发生异常，错误信息为: $err ."
         set nRet $::ATT_TESTCENTER_FAIL
         return [list $nRet $msg]
@@ -999,12 +999,12 @@ proc ::ATTTestCenter::GetPortStats {portName subOption {filterStream "0"}} {
 #Calls:   无
 #Data Accessed:  无
 #Data Updated:  无
-#Input:   
+#Input:
 #    portName        表示获取统计信息的端口名，这里的端口名是预约端口时指定的名字
 #    streamName      表示需要统计的流的名字，这里的stream名必须是创建过的stream
 #    subOption       表示需要获取的统计结果的子项名。如果为空，返回所有子项信息
 #Output:    无
-#Return:  
+#Return:
 #    $ATT_TESTCENTER_SUC  $msg        表示成功
 #    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
 #    其他值                           表示失败
@@ -1012,13 +1012,13 @@ proc ::ATTTestCenter::GetPortStats {portName subOption {filterStream "0"}} {
 #Others:   无
 #*******************************************************************************
 proc ::ATTTestCenter::GetStreamStats {portName streamName {subOption ""}} {
-	
+
     # 通过xmlrpc::call调用server端的相应接口
     if {[catch { set ret [xmlrpc::call $::ATTTestCenter::url "::ATTTestCenter::GetStreamStats" \
                                        [list [list string $portName] \
 									         [list string $streamName] \
 	                                         [list string $subOption] ] ] } err] == 1} {
-        
+
         set msg "调用xmlrpc::call发生异常，错误信息为: $err ."
         set nRet $::ATT_TESTCENTER_FAIL
         return [list $nRet $msg]
@@ -1034,7 +1034,7 @@ proc ::ATTTestCenter::GetStreamStats {portName streamName {subOption ""}} {
 #Calls:   无
 #Data Accessed:  无
 #Data Updated:  无
-#Input:   
+#Input:
 #    portName   表示需要创建host的端口名，这里的端口名是预约端口时指定的名字
 #    hostName   表示需要创建的host的名字。该名字用于后面对该host的其他操作
 #    args       表示需要创建的IGMP host的属性列表。其格式为{-option value}.host的属性有：
@@ -1058,7 +1058,7 @@ proc ::ATTTestCenter::GetStreamStats {portName streamName {subOption ""}} {
 #       -FlagPing         指明是否支持Ping功能，enable/disable，默认为enable
 #
 #Output:         无
-#Return:  
+#Return:
 #    $ATT_TESTCENTER_SUC  $msg        表示成功
 #    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
 #    其他值                           表示失败
@@ -1066,7 +1066,7 @@ proc ::ATTTestCenter::GetStreamStats {portName streamName {subOption ""}} {
 #Others:   无
 #*******************************************************************************
 proc ::ATTTestCenter::CreateHost {portName hostName args} {
-	
+
 	# 组建传参列表
     set tmpArgs ""
     foreach var $args {
@@ -1078,7 +1078,7 @@ proc ::ATTTestCenter::CreateHost {portName hostName args} {
                                       [list [list string $portName] \
 									        [list string $hostName] \
 	                                        [list array $tmpArgs] ] ] } err] == 1} {
-        
+
         set msg "调用xmlrpc::call发生异常，错误信息为: $err ."
         set nRet $::ATT_TESTCENTER_FAIL
         return [list $nRet $msg]
@@ -1086,6 +1086,7 @@ proc ::ATTTestCenter::CreateHost {portName hostName args} {
     # xmlrpc::call返回结果格式为{{} result},其中result为调用接口实际返回值
 	return [lindex $ret 1]
 }
+
 
 #*******************************************************************************
 #Function:    ::ATTTestCenter::StartARPStudy {srcHost dstHost}
@@ -1098,7 +1099,7 @@ proc ::ATTTestCenter::CreateHost {portName hostName args} {
 #    dstHost  表示所请求的目的IP地址或者主机名称
 #
 #Output:         无
-#Return:  
+#Return:
 #    $ATT_TESTCENTER_SUC  $msg        表示成功
 #    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
 #    其他值                           表示失败
@@ -1106,12 +1107,128 @@ proc ::ATTTestCenter::CreateHost {portName hostName args} {
 #Others:   无
 #*******************************************************************************
 proc ::ATTTestCenter::StartARPStudy {srcHost dstHost} {
-	
+
     # 通过xmlrpc::call调用server端的相应接口
     if {[catch { set ret [xmlrpc::call $::ATTTestCenter::url "::ATTTestCenter::StartARPStudy" \
                                        [list [list string $srcHost] \
                                              [list string $dstHost] ] ] } err] == 1} {
-        
+
+        set msg "调用xmlrpc::call发生异常，错误信息为: $err ."
+        set nRet $::ATT_TESTCENTER_FAIL
+        return [list $nRet $msg]
+    }
+    # xmlrpc::call返回结果格式为{{} result},其中result为调用接口实际返回值
+	return [lindex $ret 1]
+}
+
+
+#*******************************************************************************
+#Function:    ::ATTTestCenter::CreateDHCPServer {portName routerName args}
+#Description:   在指定端口创建DHCP server，并配置DHCP server的属性
+#Calls:   无
+#Data Accessed:  无
+#Data Updated:  无
+#Input:
+#    portName     表示需要创建DHCP Server的端口名，这里的端口名是预约端口时指定的名字
+#    routerName   表示需要创建的DHCP Server的名字。该名字用于后面对该DHCP Server的其他操作
+#    args         表示需要创建的DHCP Server的属性列表。其格式为{-option value}.router的属性有：
+#       -RouterId     表示指定的RouterId，默认为1.1.1.1
+#       -LocalMac     表示server接口MAC，默认为00:00:00:11:01:01
+#       -TesterIpAddr 表示server接口IP，默认为192.0.0.2
+#       -PoolStart    表示地址池开始的IP地址，默认为192.0.0.1
+#       -PoolNum      表示地址池的数量，默认为254
+#       -PoolModifier 表示地址池中变化的步长，步长从IP地址的最后一位依次增加，默认为1
+#       -FlagGateway  表示是否配置网关IP地址，默认为FALSE
+#       -Ipv4Gateway  表示网关IP地址，默认为192.0.0.1
+#       -Active       表示DHCP server会话是否激活，默认为TRUE
+#       -LeaseTime    表示租约时间，单位为秒。默认为3600
+#
+#Output:         无
+#Return:
+#    $ATT_TESTCENTER_SUC  $msg        表示成功
+#    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
+#    其他值                           表示失败
+#
+#Others:   无
+#*******************************************************************************
+proc ::ATTTestCenter::CreateDHCPServer {portName routerName args} {
+
+	# 组建传参列表
+    set tmpArgs ""
+    foreach var $args {
+        lappend tmpArgs [list string $var]
+    }
+
+    # 通过xmlrpc::call调用server端的相应接口
+    if {[catch { set ret [xmlrpc::call $::ATTTestCenter::url "::ATTTestCenter::CreateDHCPServer" \
+                                      [list [list string $portName] \
+									        [list string $routerName] \
+	                                        [list array $tmpArgs] ] ] } err] == 1} {
+
+        set msg "调用xmlrpc::call发生异常，错误信息为: $err ."
+        set nRet $::ATT_TESTCENTER_FAIL
+        return [list $nRet $msg]
+    }
+    # xmlrpc::call返回结果格式为{{} result},其中result为调用接口实际返回值
+	return [lindex $ret 1]
+}
+
+
+#*******************************************************************************
+#Function:    ::ATTTestCenter::EnableDHCPServer {routerName}
+#Description:   开启DHCP Server，开始协议仿真
+#Calls:   无
+#Data Accessed:  无
+#Data Updated:  无
+#Input:
+#    routerName   表示要开始协议仿真的DHCP Server名称
+#
+#Output:         无
+#Return:
+#    $ATT_TESTCENTER_SUC  $msg        表示成功
+#    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
+#    其他值                           表示失败
+#
+#Others:   无
+#*******************************************************************************
+proc ::ATTTestCenter::EnableDHCPServer {routerName } {
+
+    # 通过xmlrpc::call调用server端的相应接口
+	if {[catch {set ret [xmlrpc::call $::ATTTestCenter::url "::ATTTestCenter::EnableDHCPServer" \
+            [list [list string $routerName] ] ]} err] == 1} {
+
+        set msg "调用xmlrpc::call发生异常，错误信息为: $err ."
+        set nRet $::ATT_TESTCENTER_FAIL
+        return [list $nRet $msg]
+    }
+    # xmlrpc::call返回结果格式为{{} result},其中result为调用接口实际返回值
+	return [lindex $ret 1]
+}
+
+
+#*******************************************************************************
+#Function:    ::ATTTestCenter::DisableDHCPServer {routerName}
+#Description:   关闭DHCP Server，停止协议仿真
+#Calls:   无
+#Data Accessed:  无
+#Data Updated:  无
+#Input:
+#    routerName   表示要停止协议仿真的DHCP Server名称
+#
+#Output:         无
+#Return:
+#    $ATT_TESTCENTER_SUC  $msg        表示成功
+#    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
+#    其他值                           表示失败
+#
+#Others:   无
+#*******************************************************************************
+proc ::ATTTestCenter::DisableDHCPServer {routerName } {
+
+    # 通过xmlrpc::call调用server端的相应接口
+	if {[catch {set ret [xmlrpc::call $::ATTTestCenter::url "::ATTTestCenter::DisableDHCPServer" \
+            [list [list string $routerName] ] ]} err] == 1} {
+
         set msg "调用xmlrpc::call发生异常，错误信息为: $err ."
         set nRet $::ATT_TESTCENTER_FAIL
         return [list $nRet $msg]
@@ -1127,13 +1244,13 @@ proc ::ATTTestCenter::StartARPStudy {srcHost dstHost} {
 #Calls:   无
 #Data Accessed:  无
 #Data Updated:  无
-#Input:   
+#Input:
 #    portName   表示需要创建host的端口名，这里的端口名是预约端口时指定的名字
 #    hostName   表示需要创建的host的名字。该名字用于后面对该host的其他操作
 #    args       表示需要创建的IGMP host的属性列表。其格式为{-option value}.host的属性有：
 #       -SrcMac    表示源MAC，创建多个host时，默认值依次增1，默认为00:10:94:00:00:02
 #       -SrcMacStep 表示源MAC的变化步长，步长从MAC地址的最后一位依次增加，默认为1
-#       -Ipv4Addr   表示Host起始IPv4地址，默认为192.85.1.3 
+#       -Ipv4Addr   表示Host起始IPv4地址，默认为192.85.1.3
 #       -Ipv4AddrGateway  表示GateWay的IPv4地址，默认为192.85.1.1
 #       -Ipv4AddrPrefixLen  表示Host IPv4地址Prefix长度，默认为24
 #       -Count              表示Host IP、MAC地址个数，默认为1
@@ -1150,7 +1267,7 @@ proc ::ATTTestCenter::StartARPStudy {srcHost dstHost} {
 #       -Ipv4DontFragment          指明当报文长度大于MTU是是否需要分片，默认为FALSE
 #
 #Output:         无
-#Return:  
+#Return:
 #    $ATT_TESTCENTER_SUC  $msg        表示成功
 #    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
 #    其他值                           表示失败
@@ -1158,7 +1275,7 @@ proc ::ATTTestCenter::StartARPStudy {srcHost dstHost} {
 #Others:   无
 #*******************************************************************************
 proc ::ATTTestCenter::CreateIGMPHost {portName hostName args} {
-	
+
 	# 组建传参列表
     set tmpArgs ""
     foreach var $args {
@@ -1170,7 +1287,7 @@ proc ::ATTTestCenter::CreateIGMPHost {portName hostName args} {
                                       [list [list string $portName] \
 									        [list string $hostName] \
 	                                        [list array $tmpArgs] ] ] } err] == 1} {
-        
+
         set msg "调用xmlrpc::call发生异常，错误信息为: $err ."
         set nRet $::ATT_TESTCENTER_FAIL
         return [list $nRet $msg]
@@ -1200,7 +1317,7 @@ proc ::ATTTestCenter::CreateIGMPHost {portName hostName args} {
 #       -SrcIncrement     表示主机 IP 地址增幅（IGMPv3），取值范围：32位整数，默认为1
 #       -SrcPrefixLen     表示主机 IP 地址前缀长度（IGMPv3），取值范围：1到32，默认为24
 #Output:         无
-#Return:  
+#Return:
 #    $ATT_TESTCENTER_SUC  $msg        表示成功
 #    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
 #    其他值                           表示失败
@@ -1208,7 +1325,7 @@ proc ::ATTTestCenter::CreateIGMPHost {portName hostName args} {
 #Others:   无
 #*******************************************************************************
 proc ::ATTTestCenter::SetupIGMPGroupPool {hostName groupPoolName startIP args} {
-	
+
 	# 组建传参列表
     set tmpArgs ""
     foreach var $args {
@@ -1221,7 +1338,7 @@ proc ::ATTTestCenter::SetupIGMPGroupPool {hostName groupPoolName startIP args} {
 									        [list string $groupPoolName] \
 	                                        [list string $startIP] \
 	                                        [list array $tmpArgs] ] ] } err] == 1} {
-        
+
         set msg "调用xmlrpc::call发生异常，错误信息为: $err ."
         set nRet $::ATT_TESTCENTER_FAIL
         return [list $nRet $msg]
@@ -1242,7 +1359,7 @@ proc ::ATTTestCenter::SetupIGMPGroupPool {hostName groupPoolName startIP args} {
 #    args         表示IGMP Group 的名称标识列表,不指定表示针对所有group
 #
 #Output:         无
-#Return:  
+#Return:
 #    $ATT_TESTCENTER_SUC  $msg        表示成功
 #    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
 #    其他值                           表示失败
@@ -1250,17 +1367,17 @@ proc ::ATTTestCenter::SetupIGMPGroupPool {hostName groupPoolName startIP args} {
 #Others:   无
 #*******************************************************************************
 proc ::ATTTestCenter::SendIGMPLeave {hostName args} {
-	
+
     # 组建传参列表
     set tmpArgs ""
 	if {[llength $args] == 1} {
 		set tmpArgs $args
-		
+
 		# 通过xmlrpc::call调用server端的相应接口
         if {[catch { set ret [xmlrpc::call $::ATTTestCenter::url "::ATTTestCenter::SendIGMPLeave" \
                                           [list [list string $hostName] \
                                                 [list string $tmpArgs] ] ] } err] == 1} {
-            
+
             set msg "调用xmlrpc::call发生异常，错误信息为: $err ."
             set nRet $::ATT_TESTCENTER_FAIL
             return [list $nRet $msg]
@@ -1269,18 +1386,18 @@ proc ::ATTTestCenter::SendIGMPLeave {hostName args} {
 		foreach var $args {
 			lappend tmpArgs [list string $var]
 		}
-		
+
 		# 通过xmlrpc::call调用server端的相应接口
         if {[catch { set ret [xmlrpc::call $::ATTTestCenter::url "::ATTTestCenter::SendIGMPLeave" \
                                           [list [list string $hostName] \
                                                 [list array $tmpArgs] ] ] } err] == 1} {
-            
+
             set msg "调用xmlrpc::call发生异常，错误信息为: $err ."
             set nRet $::ATT_TESTCENTER_FAIL
             return [list $nRet $msg]
         }
 	}
-    
+
     # xmlrpc::call返回结果格式为{{} result},其中result为调用接口实际返回值
 	return [lindex $ret 1]
 }
@@ -1297,7 +1414,7 @@ proc ::ATTTestCenter::SendIGMPLeave {hostName args} {
 #    args         表示IGMP Group 的名称标识列表,不指定表示针对所有group
 #
 #Output:         无
-#Return:  
+#Return:
 #    $ATT_TESTCENTER_SUC  $msg        表示成功
 #    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
 #    其他值                           表示失败
@@ -1305,17 +1422,17 @@ proc ::ATTTestCenter::SendIGMPLeave {hostName args} {
 #Others:   无
 #*******************************************************************************
 proc ::ATTTestCenter::SendIGMPReport {hostName args} {
-	
+
     # 组建传参列表
     set tmpArgs ""
 	if {[llength $args] == 1} {
 		set tmpArgs $args
-		
+
 		# 通过xmlrpc::call调用server端的相应接口
         if {[catch { set ret [xmlrpc::call $::ATTTestCenter::url "::ATTTestCenter::SendIGMPReport" \
                                           [list [list string $hostName] \
                                                 [list string $tmpArgs] ] ] } err] == 1} {
-            
+
             set msg "调用xmlrpc::call发生异常，错误信息为: $err ."
             set nRet $::ATT_TESTCENTER_FAIL
             return [list $nRet $msg]
@@ -1324,18 +1441,18 @@ proc ::ATTTestCenter::SendIGMPReport {hostName args} {
 		foreach var $args {
 			lappend tmpArgs [list string $var]
 		}
-		
+
 		# 通过xmlrpc::call调用server端的相应接口
         if {[catch { set ret [xmlrpc::call $::ATTTestCenter::url "::ATTTestCenter::SendIGMPReport" \
                                           [list [list string $hostName] \
                                                 [list array $tmpArgs] ] ] } err] == 1} {
-            
+
             set msg "调用xmlrpc::call发生异常，错误信息为: $err ."
             set nRet $::ATT_TESTCENTER_FAIL
             return [list $nRet $msg]
         }
 	}
-	
+
     # xmlrpc::call返回结果格式为{{} result},其中result为调用接口实际返回值
 	return [lindex $ret 1]
 }
@@ -1348,14 +1465,14 @@ proc ::ATTTestCenter::SendIGMPReport {hostName args} {
 #Data Accessed:  无
 #Data Updated:  无
 #Input:
-#    portName        表示需要创建router的端口名，这里的端口名是预约端口时指定的名字  
+#    portName        表示需要创建router的端口名，这里的端口名是预约端口时指定的名字
 #    routerName      表示要配置的IGMP Router名
 #    routerIp        表示 IGMP Router 的接口 IPv4 地址
 #    args            表示IGMP router的属性列表,格式为{-option value}.具体属性描述如下：
 #       -SrcMac      表示源Mac，创建多个Router时，默认值按照步长1递增
 #       -ProtocolType       表示Protocol的类型。合法值：IGMPv1/IGMPv2/IGMPv3。默认为IGMPv2
 #       -IgnoreV1Reports    指明是否忽略接收到的 IGMPv1 Host的报文，默认为False
-#       -Ipv4DontFragment   指明当报文长度大于 MTU 时，是否进行分片，默认为False 
+#       -Ipv4DontFragment   指明当报文长度大于 MTU 时，是否进行分片，默认为False
 #       -LastMemberQueryCount  表示在认定组中没有成员之前发送的特定组查询的次数，默认为2
 #       -LastMemberQueryInterval  表示在认定组中没有成员之前发送指定组查询报文的 时间间隔（单位 ms），默认为1000
 #       -QueryInterval            表示发送查询报文的时间间隔（单位 s），，默认为32
@@ -1364,7 +1481,7 @@ proc ::ATTTestCenter::SendIGMPReport {hostName args} {
 #       -Active                表示IGMP Router会话是否激活，默认为TRUE
 #
 #Output:         无
-#Return:  
+#Return:
 #    $ATT_TESTCENTER_SUC  $msg        表示成功
 #    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
 #    其他值                           表示失败
@@ -1372,7 +1489,7 @@ proc ::ATTTestCenter::SendIGMPReport {hostName args} {
 #Others:   无
 #*******************************************************************************
 proc ::ATTTestCenter::CreateIGMPRouter {portName routerName routerIp args} {
-	
+
 	# 组建传参列表
     set tmpArgs ""
     foreach var $args {
@@ -1383,7 +1500,7 @@ proc ::ATTTestCenter::CreateIGMPRouter {portName routerName routerIp args} {
                                        [list [list string $portName] [list string $routerName] \
 			                                 [list string $routerIp] [list array $tmpArgs] ] ] \
 		       } err] == 1} {
-        
+
         set msg "调用xmlrpc::call发生异常，错误信息为: $err ."
         set nRet $::ATT_TESTCENTER_FAIL
         return [list $nRet $msg]
@@ -1403,7 +1520,7 @@ proc ::ATTTestCenter::CreateIGMPRouter {portName routerName routerIp args} {
 #    routerName      表示要开始通用IGMP查询的IGMP Router名
 #
 #Output:         无
-#Return:  
+#Return:
 #    $ATT_TESTCENTER_SUC  $msg        表示成功
 #    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
 #    其他值                           表示失败
@@ -1411,11 +1528,11 @@ proc ::ATTTestCenter::CreateIGMPRouter {portName routerName routerIp args} {
 #Others:   无
 #*******************************************************************************
 proc ::ATTTestCenter::StartIGMPRouterQuery {routerName} {
-	
+
 	# 通过xmlrpc::call调用server端的相应接口
     if {[catch { set ret [xmlrpc::call $::ATTTestCenter::url "::ATTTestCenter::StartIGMPRouterQuery" \
                                        [list [list string $routerName] ] ] } err] == 1} {
-        
+
         set msg "调用xmlrpc::call发生异常，错误信息为: $err ."
         set nRet $::ATT_TESTCENTER_FAIL
         return [list $nRet $msg]
@@ -1434,7 +1551,7 @@ proc ::ATTTestCenter::StartIGMPRouterQuery {routerName} {
 #Input:
 #    routerName      表示要停止通用IGMP查询的IGMP Router名
 #Output:         无
-#Return:  
+#Return:
 #    $ATT_TESTCENTER_SUC  $msg        表示成功
 #    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
 #    其他值                           表示失败
@@ -1442,11 +1559,11 @@ proc ::ATTTestCenter::StartIGMPRouterQuery {routerName} {
 #Others:   无
 #*******************************************************************************
 proc ::ATTTestCenter::StopIGMPRouterQuery {routerName} {
-	
+
 	# 通过xmlrpc::call调用server端的相应接口
     if {[catch { set ret [xmlrpc::call $::ATTTestCenter::url "::ATTTestCenter::StopIGMPRouterQuery" \
                                        [list [list string $routerName] ] ] } err] == 1} {
-        
+
         set msg "调用xmlrpc::call发生异常，错误信息为: $err ."
         set nRet $::ATT_TESTCENTER_FAIL
         return [list $nRet $msg]
@@ -1462,10 +1579,10 @@ proc ::ATTTestCenter::StopIGMPRouterQuery {routerName} {
 #Calls:   无
 #Data Accessed:  无
 #Data Updated:  无
-#Input:   
+#Input:
 #       path  xml文件保存的路径
-#Output:     
-#Return:  
+#Output:
+#Return:
 #    $ATT_TESTCENTER_SUC  $msg        表示成功
 #    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
 #    其他值                           表示失败
@@ -1473,7 +1590,7 @@ proc ::ATTTestCenter::StopIGMPRouterQuery {routerName} {
 #Others:   无
 #*******************************************************************************
 proc ::ATTTestCenter::SaveConfigAsXML {path} {
-        
+
     if {[catch { set ret [xmlrpc::call $::ATTTestCenter::url "::ATTTestCenter::SaveConfigAsXML" \
                                [list [list string $path] ] ] } err] == 1} {
 
@@ -1481,7 +1598,7 @@ proc ::ATTTestCenter::SaveConfigAsXML {path} {
         set nRet $::ATT_TESTCENTER_FAIL
         return [list $nRet $msg]
     }
-    
+
 	return [lindex $ret 1]
 }
 
@@ -1492,11 +1609,11 @@ proc ::ATTTestCenter::SaveConfigAsXML {path} {
 #Calls:   无
 #Data Accessed:  无
 #Data Updated:  无
-#Input:   
+#Input:
 #       portName  端口名
 #       schedulingMode 数据流的调度模式，取值范围为：PORT_BASED | RATE_BASED | PRIORITY_BASED，默认为RATE_BASED
-#Output:     
-#Return:  
+#Output:
+#Return:
 #    $ATT_TESTCENTER_SUC  $msg        表示成功
 #    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
 #    其他值                           表示失败
@@ -1504,7 +1621,7 @@ proc ::ATTTestCenter::SaveConfigAsXML {path} {
 #Others:   无
 #*******************************************************************************
 proc ::ATTTestCenter::SetStreamSchedulingMode {portName {schedulingMode RATE_BASED}} {
-		
+
 	if {[catch { set ret [xmlrpc::call $::ATTTestCenter::url "::ATTTestCenter::SetStreamSchedulingMode" \
                                [list [list string $portName] \
 	                                 [list string $schedulingMode] ] ] } err] == 1} {
@@ -1513,8 +1630,8 @@ proc ::ATTTestCenter::SetStreamSchedulingMode {portName {schedulingMode RATE_BAS
         set nRet $::ATT_TESTCENTER_FAIL
         return [list $nRet $msg]
     }
-    
-	return [lindex $ret 1]	
+
+	return [lindex $ret 1]
 }
 
 
@@ -1524,10 +1641,10 @@ proc ::ATTTestCenter::SetStreamSchedulingMode {portName {schedulingMode RATE_BAS
 #Calls:  无
 #Data Accessed:   无
 #Data Updated:  无
-#Input:      
+#Input:
 #      useless    没有用的参数，仅仅是为了xmlrpc调用格式的需要，必须传参
 #Output:   无
-#Return:  
+#Return:
 #    $ATT_TESTCENTER_SUC  $msg        表示成功
 #    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
 #    其他值                           表示失败
@@ -1535,15 +1652,15 @@ proc ::ATTTestCenter::SetStreamSchedulingMode {portName {schedulingMode RATE_BAS
 #Others:   无
 #*******************************************************************************
 proc ::ATTTestCenter::CleanupTest {{useless ""}} {
-    
+
     if {[catch { set ret [xmlrpc::call $::ATTTestCenter::url "::ATTTestCenter::CleanupTest" \
 		                               [list [list string $useless] ] ] } err] == 1} {
-        
+
         set msg "调用xmlrpc::call发生异常，错误信息为: $err ."
         set nRet $::ATT_TESTCENTER_FAIL
         return [list $nRet $msg]
     }
-    
+
 	return [lindex $ret 1]
 }
 
@@ -1554,10 +1671,10 @@ proc ::ATTTestCenter::CleanupTest {{useless ""}} {
 #Calls:  无
 #Data Accessed:   无
 #Data Updated:  无
-#Input:      
+#Input:
 #      useless    没有用的参数，仅仅是为了xmlrpc调用格式的需要，必须传参
 #Output:   无
-#Return:  
+#Return:
 #    $ATT_TESTCENTER_SUC  $msg        表示成功
 #    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
 #    其他值                           表示失败
@@ -1565,23 +1682,23 @@ proc ::ATTTestCenter::CleanupTest {{useless ""}} {
 #Others:   无
 #*******************************************************************************
 proc ::ATTTestCenter::CheckServerIsStart {{useless ""}} {
-    
+
     if {[catch { set ret [xmlrpc::call $::ATTTestCenter::url "::ATTTestCenter::CheckServerIsStart" \
 		                               [list [list string $useless] ] ] } err] == 1} {
-        
+
         set msg "调用xmlrpc::call发生异常，错误信息为: $err ."
         set nRet $::ATT_TESTCENTER_FAIL
         return [list $nRet $msg]
     }
-    
+
 	return [lindex $ret 1]
 }
 
 
 
 # debug
-if {0} {  
-    
+if {0} {
+
     set ret [::ATTTestCenter::ConnectChassis 192.168.1.100]
     puts $ret
 
