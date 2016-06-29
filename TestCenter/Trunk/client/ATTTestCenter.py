@@ -1956,6 +1956,75 @@ class ATTTestCenter(object):
         return n_ret, str_ret
 
 
+    def testcenter_create_icmpv6_packet(self, packet_name, icmpv6_type, dict_args):
+        """
+        功能描述：创建ICMPV6报文PDU
+
+        参数:
+            packet_name: 创建的PDU的名字,该名字可用于后面对PDU的其他操作
+            icmpv6_type: 表示ICMPV6包类型，Icmpv6DestUnreach, Icmpv6EchoReply, Icmpv6EchoRequest,
+                         Icmpv6PacketTooBig, Icmpv6ParameterProblem, Icmpv6TimeExceeded
+
+            dict_args: 表示可选参数字典,具体参数描述如下：
+                code: 表示Icmp包代码，支持0-255 十进制数字书写
+                checksum: 表示校验码,默认自动计算
+                identifier: 表示标识符，默认为 0
+                sequ_num: 表示Icmp包序列号
+                data: 表示ICMPV6包数据，默认为0000
+
+        """
+
+        n_ret = ATT_TESTCENTER_SUC
+        str_ret = ""
+
+        try:
+
+            tmp_dict = dict_args
+
+            # build TCL Command
+            cmd = "::ATTTestCenter::CreatePacket %s Icmpv6 -IcmpPktType %s"  % (packet_name, icmpv6_type)
+
+            # check user input args
+            for var in tmp_dict.keys():
+
+                if var == "code":
+                    cmd = "%s -Code %s" % (cmd, tmp_dict[var])
+
+                elif var == "checksum":
+                    cmd = "%s -CheckSum %s" % (cmd, tmp_dict[var])
+
+                elif var == "sequ_num":
+                    cmd = "%s -SequNum %s" % (cmd, tmp_dict[var])
+
+                elif var == "data":
+                    cmd = "%s -Data %s" % (cmd, tmp_dict[var])
+
+                elif var == "identifier":
+                    cmd = "%s -Identifier %s" % (cmd, tmp_dict[var])
+
+                else:
+                    str_ret = "unsupport argument %s." % var
+                    raise RuntimeError("execute testcenter_create_icmp_packet fail, errInfo:%s" % str_ret)
+
+            # execute TCL Command
+            self.tcl_ret = self.tcl.eval(cmd)
+            # parse return value
+            if self.tcl_ret:
+                n_ret = int(self.tcl_ret.split(' ', 1)[0])
+                str_ret = self.tcl_ret.split(' ', 1)[1].strip('{}')
+                str_ret = self._convert_coding(str_ret)
+
+            else:
+                n_ret = ATT_TESTCENTER_FAIL
+                str_ret = u"执行TCL command %s 失败，无错误信息返回。" % cmd
+
+        except Exception,e:
+            n_ret = ATT_TESTCENTER_FAIL
+            str_ret = u"执行TCL command %s 发生异常，错误信息为：%s" % (cmd, e)
+
+        return n_ret, str_ret
+
+
     def testcenter_create_arp_packet(self, packet_name, dict_args):
         """
         功能描述：创建ARP报文PDU
@@ -2922,7 +2991,7 @@ class ATTTestCenter(object):
         功能描述：在端口创建DHCP server,并配置相关属性
 
         参数：
-            port_name: 表示要创建DHCP server的端口别名， 必须是预约端口时指定的名字
+            port_name: 表示要创建DHCP server的端口别名，必须是预约端口时指定的名字
             router_name: 表示创建的DHCP server的名字
             dict_args: 表示可选参数字典，具体参数描述如下：
                 router_id: 表示指定的RouterId，默认为1.1.1.1
@@ -3068,6 +3137,219 @@ class ATTTestCenter(object):
         try:
             # build TCL Command
             cmd = "::ATTTestCenter::DisableDHCPServer %s"  % router_name
+
+            # execute TCL Command
+            self.tcl_ret = self.tcl.eval(cmd)
+
+            # parse return value, in normal case, return valus is {{num} {string}}
+            if self.tcl_ret:
+                n_ret = int(self.tcl_ret.split(' ', 1)[0])
+                str_ret = self.tcl_ret.split(' ', 1)[1].strip('{}')
+                str_ret = self._convert_coding(str_ret)
+
+            else:
+                n_ret = ATT_TESTCENTER_FAIL
+                str_ret = u"执行TCL command %s 失败，无错误信息返回。" % cmd
+
+        except Exception as e:
+            n_ret = ATT_TESTCENTER_FAIL
+            str_ret = u"执行TCL command %s 发生异常，错误信息为：%s" % (cmd, e)
+
+        return n_ret, str_ret
+
+
+    def testcenter_create_dhcp_client(self, port_name, router_name, dict_args):
+        """
+        功能描述：在端口创建DHCP client,并配置相关属性
+
+        参数：
+            port_name: 表示要创建DHCP client的端口别名，必须是预约端口时指定的名字
+            router_name: 表示创建的DHCP client的名字
+            dict_args: 表示可选参数字典，具体参数描述如下：
+                pool_name: 可以用于创建流量的目的地址和源地址。仪表能完成其相应的地址变化，与其仿真功能对应的各层次的封装。
+                           注意：PoolName和routerName不要相同，默认为空。
+                router_id: 表示指定的RouterId，默认为1.1.1.1
+                local_mac: 表示server接口MAC，默认为00:00:00:11:01:01
+                count: 表示模拟的主机数量，默认为1
+                auto_retry_num: 表示最大尝试建立连接的次数，默认为1
+                flag_gateway: 表示是否配置网关IP地址，默认为FALSE
+                ipv4_gateway: 表示网关IP地址，默认为192.0.0.1
+                active：表示DHCP server会话是否激活，默认为TRUE
+                flag_broadcast：表示广播标识位，广播为TRUE，单播为FALSE，默认为TRUE
+                enable_vlan: 指明是否添加vlan，enable/disable, 默认为disable
+                vlan_id: 指明Vlan id的值，取值范围0-4095（超出范围设置为0）， 默认为100
+                vlan_pri: 优先级,取值范围0-7，默认为0
+
+        """
+
+        n_ret = ATT_TESTCENTER_SUC
+        str_ret = ""
+
+        try:
+
+            tmp_dict = dict_args
+
+            # build TCL Command
+            cmd = "::ATTTestCenter::CreateDHCPClient %s %s "  % (port_name, router_name)
+
+            # check user input args
+            for var in tmp_dict.keys():
+
+                if var == "pool_name":
+                    cmd = "%s -PoolName %s" % (cmd, tmp_dict[var])
+
+                elif var == "router_id":
+                    cmd = "%s -RouterId %s" % (cmd, tmp_dict[var])
+
+                elif var == "local_mac":
+                    cmd = "%s -LocalMac %s" % (cmd, tmp_dict[var])
+
+                elif var == "count":
+                    cmd = "%s -Count %s" % (cmd, tmp_dict[var])
+
+                elif var == "auto_retry_num":
+                    cmd = "%s -AutoRetryNum %s" % (cmd, tmp_dict[var])
+
+                elif var == "flag_gateway":
+                    cmd = "%s -FlagGateway %s" % (cmd, tmp_dict[var])
+
+                elif var == "ipv4_gateway":
+                    cmd = "%s -Ipv4Gateway %s" % (cmd, tmp_dict[var])
+
+                elif var == "active":
+                    cmd = "%s -Active %s" % (cmd, tmp_dict[var])
+
+                elif var == "flag_broadcast":
+                    cmd = "%s -FlagBroadcast %s" % (cmd, tmp_dict[var])
+
+                elif var == "enable_vlan":
+                    cmd = "%s -EnableVlan %s" % (cmd, tmp_dict[var])
+
+                elif var == "vlan_id":
+                    cmd = "%s -VlanId %s" % (cmd, tmp_dict[var])
+
+                elif var == "vlan_pri":
+                    cmd = "%s -VlanPriority %s" % (cmd, tmp_dict[var])
+
+                else:
+                    str_ret = "unsupport argument %s." % var
+                    raise RuntimeError("execute testcenter_create_dhcp_client fail, errInfo:%s" % str_ret)
+
+                # execute TCL Command
+                self.tcl_ret = self.tcl.eval(cmd)
+
+                # parse return value
+                if self.tcl_ret:
+                    n_ret = int(self.tcl_ret.split(' ', 1)[0])
+                    str_ret = self.tcl_ret.split(' ', 1)[1].strip('{}')
+                    str_ret = self._convert_coding(str_ret)
+
+                else:
+                    n_ret = ATT_TESTCENTER_FAIL
+                    str_ret = u"执行TCL command %s 失败，无错误信息返回。" % cmd
+
+        except Exception as e:
+            n_ret = ATT_TESTCENTER_FAIL
+            str_ret = u"执行TCL command %s 发生异常，错误信息为：%s" % (cmd, e)
+
+        return n_ret, str_ret
+
+
+    def testcenter_enable_dhcp_client(self, router_name):
+        """
+        功能描述：使能DHCP Client
+
+        参数：
+            router_name: 表示要使能的DHCP Client名称
+
+        """
+
+        n_ret = ATT_TESTCENTER_SUC
+        str_ret = ""
+
+        try:
+            # build TCL Command
+            cmd = "::ATTTestCenter::EnableDHCPClient %s"  % router_name
+
+            # execute TCL Command
+            self.tcl_ret = self.tcl.eval(cmd)
+
+            # parse return value, in normal case, return valus is {{num} {string}}
+            if self.tcl_ret:
+                n_ret = int(self.tcl_ret.split(' ', 1)[0])
+                str_ret = self.tcl_ret.split(' ', 1)[1].strip('{}')
+                str_ret = self._convert_coding(str_ret)
+
+            else:
+                n_ret = ATT_TESTCENTER_FAIL
+                str_ret = u"执行TCL command %s 失败，无错误信息返回。" % cmd
+
+        except Exception as e:
+            n_ret = ATT_TESTCENTER_FAIL
+            str_ret = u"执行TCL command %s 发生异常，错误信息为：%s" % (cmd, e)
+
+        return n_ret, str_ret
+
+
+    def testcenter_disable_dhcp_client(self, router_name):
+        """
+        功能描述：停止DHCP Client
+
+        参数：
+            router_name: 表示要停止的DHCP Client名称
+
+        """
+
+        n_ret = ATT_TESTCENTER_SUC
+        str_ret = ""
+
+        try:
+            # build TCL Command
+            cmd = "::ATTTestCenter::DisableDHCPClient %s"  % router_name
+
+            # execute TCL Command
+            self.tcl_ret = self.tcl.eval(cmd)
+
+            # parse return value, in normal case, return valus is {{num} {string}}
+            if self.tcl_ret:
+                n_ret = int(self.tcl_ret.split(' ', 1)[0])
+                str_ret = self.tcl_ret.split(' ', 1)[1].strip('{}')
+                str_ret = self._convert_coding(str_ret)
+
+            else:
+                n_ret = ATT_TESTCENTER_FAIL
+                str_ret = u"执行TCL command %s 失败，无错误信息返回。" % cmd
+
+        except Exception as e:
+            n_ret = ATT_TESTCENTER_FAIL
+            str_ret = u"执行TCL command %s 发生异常，错误信息为：%s" % (cmd, e)
+
+        return n_ret, str_ret
+
+
+    def testcenter_method_dhcp_client(self, router_name, method):
+        """
+        功能描述：DHCP Client协议仿真
+
+        参数：
+
+            port_name: 表示要创建DHCP client的端口名
+            router_name: 表示创建的DHCP client的名字
+            method: 表示DHCP client仿真的方法，
+                    Bind:       启动DHCP 绑定过程
+                    Release:    释放绑定过程
+                    Renew:      重新启动DHCP 绑定过程
+                    Abort:      停止所有active Session的dhcp router，迫使其状态进入idle
+                    Reboot:     迫使dhcp router重新reboot。即完成一个完整的过程，重新开始新的一个循环。
+                                Reboot应该发送请求以前分配的IP地址。
+        """
+
+        n_ret = ATT_TESTCENTER_SUC
+        str_ret = ""
+
+        try:
+            # build TCL Command
+            cmd = "::ATTTestCenter::MethodDHCPClient %s %s"  % (router_name, method)
 
             # execute TCL Command
             self.tcl_ret = self.tcl.eval(cmd)

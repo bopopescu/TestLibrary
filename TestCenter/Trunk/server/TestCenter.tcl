@@ -473,6 +473,8 @@ proc ::TestCenter::SetupHost {portName hostName args} {
 #    routerName     表示要配置的DHCP Server的主机名
 #    args          表示DHCP Server的属性列表,格式为{-option value}.具体属性描述如下：
 #    DHCPServer:
+#       -PoolName     可以用于创建流量的目的地址和源地址。仪表能完成其相应的地址变化，与其仿真功能对应的各层次的封装。
+#                     注意：PoolName和routerName不要相同，默认为空。
 #       -LocalMac     表示server接口MAC，默认为00:00:00:11:01:01
 #       -TesterIpAddr 表示server接口IP，默认为192.0.0.2
 #       -PoolStart    表示地址池开始的IP地址，默认为192.0.0.1
@@ -639,6 +641,248 @@ proc ::TestCenter::DisableDHCPServer {routerName } {
 		return [list $TestCenter::ExpectSuccess $errMsg]
 	}
 }
+
+
+#*******************************************************************************
+#Function:    ::TestCenter::SetupDHCPClient {routerName args}
+#Description:   配置DHCP Client
+#Calls:   无
+#Data Accessed:  无
+#Data Updated:  无
+#Input:
+#    routerName     表示要配置的DHCP Client的主机名
+#    args           表示DHCP Client的属性列表,格式为{-option value}.具体属性描述如下：
+#    DHCPClient:
+#       -PoolName        可以用于创建流量的目的地址和源地址。仪表能完成其相应的地址变化，与其仿真功能对应的各层次的封装。
+#                        注意：PoolName和routerName不要相同，默认为空。
+#       -LocalMac        表示Client接口MAC，默认为00:00:00:11:01:01
+#       -Count           表示模拟的主机数量，默认为1
+#       -AutoRetryNum    表示最大尝试建立连接的次数，默认为1
+#       -FlagGateway     表示是否配置网关IP地址，默认为FALSE
+#       -Ipv4Gateway     表示网关IP地址，默认为空
+#       -Active          表示DHCP server会话是否激活，默认为TRUE
+#       -FlagBroadcast   表示广播标识位，广播为TRUE，单播为FALSE，默认为TRUE
+#
+#Output:         无
+#Return:
+#    list $TestCenter::ExpectSuccess $msg          表示成功
+#    list $TestCenter::FunctionExecuteError  $msg  表示调用函数失败
+#    其他值                                        表示失败
+#
+#Others:   无
+#*******************************************************************************
+proc ::TestCenter::SetupDHCPClient {routerName args} {
+
+    set log [LOG::init TestCenter_SetupDHCPClient]
+	set errMsg ""
+
+    foreach once {once} {
+        # 检查参数routerName指定的对象是否存在，如果不存在，返回失败
+		set tmpInfo [array get TestCenter::object $routerName]
+		if {$tmpInfo == ""} {
+			set errMsg "$routerName不存在，无法开始协议仿真."
+			break
+		}
+
+        # 组建命令
+		if {$args != ""} {
+			set tmpCmd  "$routerName SetSession"
+			for {set i 0} {$i<10} {incr i} {
+				if {[llength $args] == 1} {
+					set args [lindex $args 0]
+				} else {
+					break
+				}
+			}
+			foreach {option value} $args {
+				lappend tmpCmd $option $value
+			}
+
+            LOG::DebugInfo $log [expr $[namespace current]::currentFileName] "RUN CMD: $tmpCmd"
+			# 执行命令
+			if {[catch {set res [eval $tmpCmd]} err] == 1} {
+				set errMsg "配置DHCP Client发生异常，错误信息为:$err ."
+				break
+			}
+			if {$res != 0} {
+				set errMsg "配置DHCP Client失败，返回值为:$res ."
+				break
+			}
+		} else {
+			set errMsg "未传入DHCP Client的任何属性，无法配置DHCP Client"
+			break
+		}
+
+        set errMsg "配置DHCP Client成功。"
+		return [list $TestCenter::ExpectSuccess $errMsg]
+    }
+    LOG::DebugErr $log [expr $[namespace current]::currentFileName] $errMsg
+	return [list $TestCenter::FunctionExecuteError $errMsg]
+}
+
+
+#*******************************************************************************
+#Function:    ::TestCenter::EnableDHCPClient {routerName}
+#Description:   使能DHCP Client
+#Calls:   无
+#Data Accessed:  无
+#Data Updated:  无
+#Input:
+#    routerName   表示要使能的DHCP Client名称
+#
+#Output:         无
+#Return:
+#    list $TestCenter::ExpectSuccess $msg          表示成功
+#    list $TestCenter::FunctionExecuteError  $msg  表示调用函数失败
+#    其他值                                        表示失败
+#
+#Others:   无
+#*******************************************************************************
+proc ::TestCenter::EnableDHCPClient {routerName } {
+
+    set log [LOG::init EnableDHCPClient]
+	set errMsg ""
+
+    foreach once {once} {
+		# 检查参数routerName指定的对象是否存在，如果不存在，返回失败
+		set tmpInfo [array get TestCenter::object $routerName]
+		if {$tmpInfo == ""} {
+			set errMsg "$routerName不存在，无法开始协议仿真."
+			break
+		}
+
+		# 组建命令
+		set tmpCmd  "$routerName Enable"
+
+		LOG::DebugInfo $log [expr $[namespace current]::currentFileName] "RUN CMD: $tmpCmd"
+		# 执行命令
+		if {[catch {set res [eval $tmpCmd]} err] == 1} {
+			set errMsg "$routerName 开启DHCP Client协议仿真发生异常，错误信息为:$err ."
+			break
+		}
+		if {$res != 0} {
+			set errMsg "$routerName 开启DHCP Client协议仿真发生异常，返回值为:$res ."
+			break
+		}
+
+		set errMsg "开启DHCP Client协议仿真成功。"
+		return [list $TestCenter::ExpectSuccess $errMsg]
+	}
+}
+
+
+#*******************************************************************************
+#Function:    ::TestCenter::DisableDHCPClient {routerName}
+#Description:   停止DHCP Client
+#Calls:   无
+#Data Accessed:  无
+#Data Updated:  无
+#Input:
+#    routerName   表示要停止的DHCP Client名称
+#
+#Output:         无
+#Return:
+#    list $TestCenter::ExpectSuccess $msg          表示成功
+#    list $TestCenter::FunctionExecuteError  $msg  表示调用函数失败
+#    其他值                                        表示失败
+#
+#Others:   无
+#******************************************************************************
+proc ::TestCenter::DisableDHCPClient {routerName } {
+
+    set log [LOG::init DisableDHCPClient]
+	set errMsg ""
+
+    foreach once {once} {
+		# 检查参数routerName指定的对象是否存在，如果不存在，返回失败
+		set tmpInfo [array get TestCenter::object $routerName]
+		if {$tmpInfo == ""} {
+			set errMsg "$routerName不存在，无法关闭协议仿真."
+			break
+		}
+
+		# 组建命令
+		set tmpCmd  "$routerName Disable"
+
+		LOG::DebugInfo $log [expr $[namespace current]::currentFileName] "RUN CMD: $tmpCmd"
+		# 执行命令
+		if {[catch {set res [eval $tmpCmd]} err] == 1} {
+			set errMsg "$routerName 关闭DHCP Client协议仿真发生异常，错误信息为:$err ."
+			break
+		}
+		if {$res != 0} {
+			set errMsg "$routerName 关闭DHCP Client协议仿真发生异常，返回值为:$res ."
+			break
+		}
+
+		set errMsg "关闭DHCP Client协议仿真成功。"
+		return [list $TestCenter::ExpectSuccess $errMsg]
+	}
+}
+
+
+#*******************************************************************************
+#Function:    ::TestCenter::MethodDHCPClient {routerName method}
+#Description:   DHCP Client协议仿真
+#Calls:   无
+#Data Accessed:  无
+#Data Updated:  无
+#Input:
+#    routerName   表示创建的DHCP client的名字
+#    method:      表示DHCP client仿真的方法，
+#        Bind:       启动DHCP 绑定过程
+#        Release:    释放绑定过程
+#        Renew:      重新启动DHCP 绑定过程
+#        Abort:      停止所有active Session的dhcp router，迫使其状态进入idle
+#        Reboot:     迫使dhcp router重新reboot。即完成一个完整的过程，重新开始新的一个循环。
+#                    Reboot应该发送请求以前分配的IP地址。
+#Output:         无
+#Return:
+#    $ATT_TESTCENTER_SUC  $msg        表示成功
+#    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
+#    其他值                           表示失败
+#
+#Others:   无
+#*******************************************************************************
+proc ::TestCenter::MethodDHCPClient {routerName method} {
+
+    set log [LOG::init MethodDHCPClient]
+	set errMsg ""
+
+    foreach once {once} {
+		# 检查参数routerName指定的对象是否存在，如果不存在，返回失败
+		set tmpInfo [array get TestCenter::object $routerName]
+		if {$tmpInfo == ""} {
+			set errMsg "$routerName不存在，无法进行协议仿真."
+			break
+		}
+        # 检查参数method输入的对象是否正确，如果不正确，返回失败
+        set method_list [list Bind Release Renew Abort Reboot]
+        set index [lsearch -nocase $method_list $method]
+        if {$index == -1} {
+            set errMsg "$method 仿真操作输入错误."
+            break
+        }
+
+		# 组建命令
+		set tmpCmd  "$routerName $method"
+
+		LOG::DebugInfo $log [expr $[namespace current]::currentFileName] "RUN CMD: $tmpCmd"
+		# 执行命令
+		if {[catch {set res [eval $tmpCmd]} err] == 1} {
+			set errMsg "$routerName 进行DHCP Client协议仿真发生异常，错误信息为:$err ."
+			break
+		}
+		if {$res != 0} {
+			set errMsg "$routerName 进行DHCP Client协议仿真发生异常，返回值为:$res ."
+			break
+		}
+
+		set errMsg "DHCP Client $mehtod 协议仿真成功。"
+		return [list $TestCenter::ExpectSuccess $errMsg]
+	}
+}
+
 
 
 #*******************************************************************************

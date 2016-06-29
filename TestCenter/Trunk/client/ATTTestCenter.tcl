@@ -1239,6 +1239,161 @@ proc ::ATTTestCenter::DisableDHCPServer {routerName } {
 
 
 #*******************************************************************************
+#Function:    ::ATTTestCenter::CreateDHCPClient {portName routerName args}
+#Description:   在指定端口创建DHCP Client，并配置DHCP Client的属性
+#Calls:   无
+#Data Accessed:  无
+#Data Updated:  无
+#Input:
+#    portName     表示需要创建DHCP Client的端口名，这里的端口名是预约端口时指定的名字
+#    routerName   表示需要创建的DHCP Client的名字。该名字用于后面对该DHCP Client的其他操作
+#    args         表示需要创建的DHCP Client的属性列表。其格式为{-option value}.router的属性有：
+#       -PoolName     可以用于创建流量的目的地址和源地址。仪表能完成其相应的地址变化，与其仿真功能对应的各层次的封装。
+#                     注意：PoolName和routerName不要相同，默认为空。
+#       -RouterId     表示指定的RouterId，默认为1.1.1.1
+#       -LocalMac        表示Client接口MAC，默认为00:00:00:11:01:01
+#       -Count           表示模拟的主机数量，默认为1
+#       -AutoRetryNum    表示最大尝试建立连接的次数，默认为1
+#       -FlagGateway     表示是否配置网关IP地址，默认为FALSE
+#       -Ipv4Gateway     表示网关IP地址，默认为空
+#       -Active          表示DHCP server会话是否激活，默认为TRUE
+#       -FlagBroadcast   表示广播标识位，广播为TRUE，单播为FALSE，默认为TRUE
+#
+#Output:         无
+#Return:
+#    $ATT_TESTCENTER_SUC  $msg        表示成功
+#    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
+#    其他值                           表示失败
+#
+#Others:   无
+#*******************************************************************************
+proc ::ATTTestCenter::CreateDHCPClient {portName routerName args} {
+
+	# 组建传参列表
+    set tmpArgs ""
+    foreach var $args {
+        lappend tmpArgs [list string $var]
+    }
+
+    # 通过xmlrpc::call调用server端的相应接口
+    if {[catch { set ret [xmlrpc::call $::ATTTestCenter::url "::ATTTestCenter::CreateDHCPClient" \
+                                      [list [list string $portName] \
+									        [list string $routerName] \
+	                                        [list array $tmpArgs] ] ] } err] == 1} {
+
+        set msg "调用xmlrpc::call发生异常，错误信息为: $err ."
+        set nRet $::ATT_TESTCENTER_FAIL
+        return [list $nRet $msg]
+    }
+    # xmlrpc::call返回结果格式为{{} result},其中result为调用接口实际返回值
+	return [lindex $ret 1]
+}
+
+
+#*******************************************************************************
+#Function:    ::ATTTestCenter::EnableDHCPClient {routerName}
+#Description:   使能DHCP Client
+#Calls:   无
+#Data Accessed:  无
+#Data Updated:  无
+#Input:
+#    routerName   表示要使能的DHCP Client名称
+#
+#Output:         无
+#Return:
+#    $ATT_TESTCENTER_SUC  $msg        表示成功
+#    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
+#    其他值                           表示失败
+#
+#Others:   无
+#*******************************************************************************
+proc ::ATTTestCenter::EnableDHCPClient {routerName } {
+
+    # 通过xmlrpc::call调用server端的相应接口
+	if {[catch {set ret [xmlrpc::call $::ATTTestCenter::url "::ATTTestCenter::EnableDHCPClient" \
+            [list [list string $routerName] ] ]} err] == 1} {
+
+        set msg "调用xmlrpc::call发生异常，错误信息为: $err ."
+        set nRet $::ATT_TESTCENTER_FAIL
+        return [list $nRet $msg]
+    }
+    # xmlrpc::call返回结果格式为{{} result},其中result为调用接口实际返回值
+	return [lindex $ret 1]
+}
+
+
+#*******************************************************************************
+#Function:    ::ATTTestCenter::DisableDHCPClient {routerName}
+#Description:   停止DHCP Client
+#Calls:   无
+#Data Accessed:  无
+#Data Updated:  无
+#Input:
+#    routerName   表示要停止的DHCP Client名称
+#
+#Output:         无
+#Return:
+#    $ATT_TESTCENTER_SUC  $msg        表示成功
+#    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
+#    其他值                           表示失败
+#
+#Others:   无
+#*******************************************************************************
+proc ::ATTTestCenter::DisableDHCPClient {routerName } {
+
+    # 通过xmlrpc::call调用server端的相应接口
+	if {[catch {set ret [xmlrpc::call $::ATTTestCenter::url "::ATTTestCenter::DisableDHCPClient" \
+            [list [list string $routerName] ] ]} err] == 1} {
+
+        set msg "调用xmlrpc::call发生异常，错误信息为: $err ."
+        set nRet $::ATT_TESTCENTER_FAIL
+        return [list $nRet $msg]
+    }
+    # xmlrpc::call返回结果格式为{{} result},其中result为调用接口实际返回值
+	return [lindex $ret 1]
+}
+
+
+#*******************************************************************************
+#Function:    ::ATTTestCenter::MethodDHCPClient {routerName method}
+#Description:   DHCP Client协议仿真
+#Calls:   无
+#Data Accessed:  无
+#Data Updated:  无
+#Input:
+#    routerName   表示创建的DHCP client的名字
+#    method:      表示DHCP client仿真的方法，
+#        Bind:       启动DHCP 绑定过程
+#        Release:    释放绑定过程
+#        Renew:      重新启动DHCP 绑定过程
+#        Abort:      停止所有active Session的dhcp router，迫使其状态进入idle
+#        Reboot:     迫使dhcp router重新reboot。即完成一个完整的过程，重新开始新的一个循环。
+#                    Reboot应该发送请求以前分配的IP地址。
+#Output:         无
+#Return:
+#    $ATT_TESTCENTER_SUC  $msg        表示成功
+#    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
+#    其他值                           表示失败
+#
+#Others:   无
+#*******************************************************************************
+proc ::ATTTestCenter::MethodDHCPClient {routerName method} {
+
+    # 通过xmlrpc::call调用server端的相应接口
+	if {[catch {set ret [xmlrpc::call $::ATTTestCenter::url "::ATTTestCenter::MethodDHCPClient" \
+                                     [list [list string $routerName] \
+                                           [list string $method] ] ]} err] == 1} {
+
+        set msg "调用xmlrpc::call发生异常，错误信息为: $err ."
+        set nRet $::ATT_TESTCENTER_FAIL
+        return [list $nRet $msg]
+    }
+    # xmlrpc::call返回结果格式为{{} result},其中result为调用接口实际返回值
+	return [lindex $ret 1]
+}
+
+
+#*******************************************************************************
 #Function:    ::ATTTestCenter::CreateIGMPHost {portName hostName args}
 #Description:   在指定端口创建IGMP Host，并配置IGMP host的属性
 #Calls:   无

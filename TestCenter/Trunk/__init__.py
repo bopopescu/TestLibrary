@@ -1534,6 +1534,59 @@ class TestCenter(object):
         return  str_ret
 
 
+    def testcenter_create_icmpv6_packet(self, packet_name, icmpv6_type, *args):
+        """
+        功能描述：创建ICMPV6报文PDU
+
+        参数：
+
+            packet_name: 创建的PDU的名字,该名字可用于后面对PDU的其他操作
+
+            icmpv6_type: 表示ICMPV6包类型，Icmpv6DestUnreach, Icmpv6EchoReply, Icmpv6EchoRequest,
+                         Icmpv6PacketTooBig, Icmpv6ParameterProblem, Icmpv6TimeExceeded
+
+            args: 表示可选参数，传入的格式为"varname=value",具体参数描述如下：
+
+                code: 表示Icmp包代码，支持0-255 十进制数字书写
+
+                checksum: 表示校验码,默认自动计算
+
+                identifier: 表示标识符，默认为 0
+
+                sequ_num: 表示Icmp包序列号
+
+                data: 表示ICMP包数据，默认为0000
+
+        Example:
+        | testcenter create icmpv6 packet | icmp_pkt1 | Icmpv6EchoReply   |
+        | testcenter create icmpv6 packet | icmp_pkt2 | Icmpv6EchoRequest |
+        """
+
+        n_ret = TESTCENTER_SUC
+        str_ret = ""
+
+        for i in [1]:
+            # covert args format
+            n_ret, tmp_ret = self._format_args(args)
+            if n_ret == TESTCENTER_FAIL:
+                str_ret = tmp_ret
+                break
+            else:
+                dict_args = tmp_ret
+
+            n_ret, str_ret = self.obj.testcenter_create_icmpv6_packet(packet_name, icmpv6_type, dict_args)
+            if n_ret == ATTTestCenter.ATT_TESTCENTER_FAIL:
+                n_ret = TESTCENTER_FAIL
+                break
+
+        if n_ret == TESTCENTER_FAIL:
+            log.user_err(str_ret)
+            raise RuntimeError(str_ret)
+
+        log.user_info(str_ret)
+        return str_ret
+
+
     def testcenter_create_arp_packet(self, packet_name, *args):
         """
         功能描述：创建ARP报文PDU
@@ -2439,7 +2492,7 @@ class TestCenter(object):
         str_ret = ""
 
         n_ret, str_ret = self.obj.testcenter_enable_dhcp_server(router_name)
-        if n_ret == TESTCENTER_FAIL:
+        if n_ret == ATTTestCenter.ATT_TESTCENTER_FAIL:
             log.user_err(str_ret)
             raise RuntimeError(str_ret)
 
@@ -2465,7 +2518,173 @@ class TestCenter(object):
         str_ret = ""
 
         n_ret, str_ret = self.obj.testcenter_disable_dhcp_server(router_name)
+        if n_ret == ATTTestCenter.ATT_TESTCENTER_FAIL:
+            log.user_err(str_ret)
+            raise RuntimeError(str_ret)
+
+        log.user_info(str_ret)
+        return  str_ret
+
+
+    def testcenter_create_dhcp_client(self, port_name, router_name, *args):
+        """
+        功能描述：在端口创建DHCP client,并配置相关属性
+
+        参数：
+
+            port_name: 表示要创建DHCP client的端口名
+
+            router_name: 表示创建的DHCP client的名字
+
+            args: 表示可选参数，传入的格式为"varname=value",具体参数描述如下：
+
+                pool_name: 可以用于创建流量的目的地址和源地址。仪表能完成其相应的地址变化，与其仿真功能对应的各层次的封装。
+                           注意：PoolName和routerName不要相同，默认为空。
+
+                router_id: 表示指定的RouterId，默认为1.1.1.1
+
+                local_mac: 表示server接口MAC，默认为00:00:00:11:01:01
+
+                count: 表示模拟的主机数量，默认为1
+
+                auto_retry_num: 表示最大尝试建立连接的次数，默认为1
+
+                flag_gateway: 表示是否配置网关IP地址，默认为FALSE
+
+                ipv4_gateway: 表示网关IP地址，默认为192.0.0.1
+
+                active：表示DHCP client会话是否激活，默认为TRUE
+
+                flag_broadcast：表示广播标识位，广播为TRUE，单播为FALSE，默认为TRUE
+
+                enable_vlan: 指明是否添加vlan，enable/disable, 默认为disable
+
+                vlan_id: 指明Vlan id的值，取值范围0-4095（超出范围设置为0）， 默认为100
+
+                vlan_pri: 优先级,取值范围0-7，默认为0
+
+        Example:
+        | testcenter create dhcp client | port1 | router1 | pool_name=client   | router_id=192.168.0.1 |
+        | testcenter create dhcp client | port2 | router2 | enable_vlan=enable | vlan_id=1000          |
+        """
+
+        n_ret = TESTCENTER_SUC
+        str_ret = ""
+
+        for i in [1]:
+            # covert args format
+            n_ret, tmp_ret = self._format_args(args)
+            if n_ret == TESTCENTER_FAIL:
+                str_ret = tmp_ret
+                break
+            else:
+                dict_args = tmp_ret
+
+            # 检测IP地址的合法性
+            if "router_id" in dict_args:
+                if not self._check_ipaddr_validity(dict_args["router_id"]):
+                    n_ret = TESTCENTER_FAIL
+                    str_ret = u"%s 不是合法的IP地址." % dict_args["router_id"]
+                    break
+
+            if "ipv4_gateway" in dict_args:
+                if not self._check_ipaddr_validity(dict_args["ipv4_gateway"]):
+                    n_ret = TESTCENTER_FAIL
+                    set_ret = u"%s 不是合法的IP地址." % dict_args["ipv4_gateway"]
+                    break
+
+            n_ret, str_ret = self.obj.testcenter_create_dhcp_client(port_name, router_name, dict_args)
+            if n_ret == ATTTestCenter.ATT_TESTCENTER_FAIL:
+                n_ret = TESTCENTER_FAIL
+                break
+
         if n_ret == TESTCENTER_FAIL:
+            log.user_err(str_ret)
+            raise RuntimeError(str_ret)
+
+        log.user_info(str_ret)
+        return  str_ret
+
+
+    def testcenter_enable_dhcp_client(self, router_name):
+        """
+        功能描述：使能DHCP Client
+
+        参数：
+
+            router_name: 表示要使能的DHCP Client名称
+
+        Example:
+        | testcenter create dhcp client | port1 | router1 | pool_name=client | router_id=192.168.0.1 |
+        | testcenter enable dhcp client | router1 |
+        """
+
+        n_ret = TESTCENTER_SUC
+        str_ret = ""
+
+        n_ret, str_ret = self.obj.testcenter_enable_dhcp_client(router_name)
+        if n_ret == ATTTestCenter.ATT_TESTCENTER_FAIL:
+            log.user_err(str_ret)
+            raise RuntimeError(str_ret)
+
+        log.user_info(str_ret)
+        return  str_ret
+
+
+    def testcenter_disable_dhcp_client(self, router_name):
+        """
+        功能描述：停止DHCP Client
+
+        参数：
+
+            router_name: 表示要停止的DHCP Client名称
+
+        Example:
+        | testcenter create dhcp client | port1 | router1 | pool_name=client   | router_id=192.168.0.1 |
+        | testcenter enable dhcp client | router1 |
+        | testcenter disable dhcp client | router1 |
+        """
+
+        n_ret = TESTCENTER_SUC
+        str_ret = ""
+
+        n_ret, str_ret = self.obj.testcenter_disable_dhcp_client(router_name)
+        if n_ret == ATTTestCenter.ATT_TESTCENTER_FAIL:
+            log.user_err(str_ret)
+            raise RuntimeError(str_ret)
+
+        log.user_info(str_ret)
+        return  str_ret
+
+
+    def testcenter_method_dhcp_client(self, router_name, method):
+        """
+        功能描述：DHCP Client协议仿真
+
+        参数：
+
+            port_name: 表示要创建DHCP client的端口名
+
+            router_name: 表示创建的DHCP client的名字
+
+            method: 表示DHCP client仿真的方法，
+                    Bind:       启动DHCP 绑定过程
+                    Release:    释放绑定过程
+                    Renew:      重新启动DHCP 绑定过程
+                    Abort:      停止所有active Session的dhcp router，迫使其状态进入idle
+                    Reboot:     迫使dhcp router重新reboot。即完成一个完整的过程，重新开始新的一个循环。
+                                Reboot应该发送请求以前分配的IP地址。
+        Example:
+        | testcenter create dhcp client | port1 | router1 | pool_name=client   | router_id=192.168.0.1 |
+        | testcenter enable dhcp client | router1 |
+        | testcenter method dhcp client | router1 | Bind |
+        """
+
+        n_ret = TESTCENTER_SUC
+        str_ret = ""
+
+        n_ret, str_ret = self.obj.testcenter_method_dhcp_client(router_name, method)
+        if n_ret == ATTTestCenter.ATT_TESTCENTER_FAIL:
             log.user_err(str_ret)
             raise RuntimeError(str_ret)
 

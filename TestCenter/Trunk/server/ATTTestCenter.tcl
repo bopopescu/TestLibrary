@@ -1782,6 +1782,8 @@ proc ::ATTTestCenter::StartARPStudy {srcHost {dstHost ""} {retries "3"} {interva
 #    portName     表示需要创建DHCP Server的端口名，这里的端口名是预约端口时指定的名字
 #    routerName   表示需要创建的DHCP Server的名字。该名字用于后面对该DHCP Server的其他操作
 #    args         表示需要创建的DHCP Server的属性列表。其格式为{-option value}.router的属性有：
+#       -PoolName     可以用于创建流量的目的地址和源地址。仪表能完成其相应的地址变化，与其仿真功能对应的各层次的封装。
+#                     注意：PoolName和routerName不要相同，默认为空。
 #       -RouterId     表示指定的RouterId，默认为1.1.1.1
 #       -LocalMac     表示server接口MAC，默认为00:00:00:11:01:01
 #       -TesterIpAddr 表示server接口IP，默认为192.0.0.2
@@ -2001,6 +2003,314 @@ proc ::ATTTestCenter::DisableDHCPServer {routerName } {
         if {[catch {set res [TestCenter::DisableDHCPServer $routerName]} err] == 1} {
 
 			set msg "调用TestCenter::DisableDHCPServer 发生异常，错误信息为: $err ."
+			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
+			set nRet $::ATT_TESTCENTER_FAIL
+			break
+		}
+        # 判断执行结果
+        if {[lindex $res 0] != $TestCenter::ExpectSuccess} {
+
+			set msg [lindex $res 1]
+			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
+			set nRet $::ATT_TESTCENTER_FAIL
+			break
+		} else {
+
+			set msg [lindex $res 1]
+			LOG::DebugInfo $func $::ATTTestCenter::__FILE__  $msg
+        }
+    }
+
+    return [list array [list [list int $nRet] [list string $msg]]]
+}
+
+
+#*******************************************************************************
+#Function:    ::ATTTestCenter::CreateDHCPClient {portName routerName args}
+#Description:   在指定端口创建DHCP Client，并配置DHCP Client的属性
+#Calls:   无
+#Data Accessed:  无
+#Data Updated:  无
+#Input:
+#    portName     表示需要创建DHCP Client的端口名，这里的端口名是预约端口时指定的名字
+#    routerName   表示需要创建的DHCP Client的名字。该名字用于后面对该DHCP Client的其他操作
+#    args         表示需要创建的DHCP Client的属性列表。其格式为{-option value}.router的属性有：
+#       -PoolName     可以用于创建流量的目的地址和源地址。仪表能完成其相应的地址变化，与其仿真功能对应的各层次的封装。
+#                     注意：PoolName和routerName不要相同，默认为空。
+#       -RouterId     表示指定的RouterId，默认为1.1.1.1
+#       -LocalMac        表示Client接口MAC，默认为00:00:00:11:01:01
+#       -Count           表示模拟的主机数量，默认为1
+#       -AutoRetryNum    表示最大尝试建立连接的次数，默认为1
+#       -FlagGateway     表示是否配置网关IP地址，默认为FALSE
+#       -Ipv4Gateway     表示网关IP地址，默认为空
+#       -Active          表示DHCP server会话是否激活，默认为TRUE
+#       -FlagBroadcast   表示广播标识位，广播为TRUE，单播为FALSE，默认为TRUE
+#
+#Output:         无
+#Return:
+#    $ATT_TESTCENTER_SUC  $msg        表示成功
+#    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
+#    其他值                           表示失败
+#
+#Others:   无
+#*******************************************************************************
+proc ::ATTTestCenter::CreateDHCPClient {portName routerName args} {
+
+    set nRet $::ATT_TESTCENTER_SUC
+	set func [::__FUNC__]
+	set msg  ""
+	set IntName $portName
+    set argsSetupRouter ""
+
+    foreach once {once} {
+
+        # 去掉args外层{}
+        if {[llength $args] == 1} {
+            set args [lindex $args 0]
+        }
+
+        # 判断是否要添加vlan
+        set index [lsearch -nocase $args -EnableVlan]
+        if {$index != -1} {
+
+            set EnableVlan [lindex $args [expr $index + 1]]
+            set args [lreplace $args $index [expr $index + 1]]
+        } else  {
+            set EnableVlan disable
+        }
+
+        # 如果要添加vlan，需要先创建vlan子接口，然后再用子接口创建host
+        if {[string tolower $EnableVlan] == "enable"} {
+            # 获取子接口的配置信息
+            set index [lsearch -nocase $args -VlanId]
+            if {$index != -1} {
+                set VlanId [lindex $args [expr $index + 1]]
+                set args [lreplace $args $index [expr $index + 1]]
+            } else  {
+                set VlanId 100
+            }
+
+            set index [lsearch -nocase $args -VlanPriority]
+            if {$index != -1} {
+                set VlanPriority [lindex $args [expr $index + 1]]
+                set args [lreplace $args $index [expr $index + 1]]
+            } else  {
+                set VlanPriority 0
+            }
+
+            # 调用::TestCenter::SetupVlan创建子接口
+            set vlanName vlan_$routerName
+            if {[catch {set res [TestCenter::SetupVlan $portName $vlanName -VlanId $VlanId -VlanPriority $VlanPriority]} err] == 1} {
+
+                set msg "调用TestCenter::SetupVlan发生异常，错误信息为: $err ."
+                LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
+                set nRet $::ATT_TESTCENTER_FAIL
+                break
+            }
+            # 判断执行结果
+            if {[lindex $res 0] != $TestCenter::ExpectSuccess} {
+
+                set msg [lindex $res 1]
+                LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
+                set nRet $::ATT_TESTCENTER_FAIL
+                break
+            }
+            LOG::DebugInfo $func $::ATTTestCenter::__FILE__  "创建Vlan子接口成功。"
+            set IntName $vlanName
+        }
+
+        # 判断是否要设置RouterId
+        set index [lsearch -nocase $args -RouterId]
+        if {$index != -1} {
+
+            set RouterId [lindex $args [expr $index + 1]]
+            set args [lreplace $args $index [expr $index + 1]]
+            set argsSetupRouter [list -RouterId $RouterId]
+        }
+
+        # 调用::TestCenter::SetupRouter创建DHCP Client
+        if {[catch {set res [TestCenter::SetupRouter $IntName $routerName DHCPClient $argsSetupRouter]} err] == 1} {
+
+            set msg "调用TestCenter::发生异常，错误信息为: $err ."
+            LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
+            set nRet $::ATT_TESTCENTER_FAIL
+            break
+        }
+        # 判断执行结果
+        if {[lindex $res 0] != $TestCenter::ExpectSuccess} {
+
+            set msg [lindex $res 1]
+            LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
+            set nRet $::ATT_TESTCENTER_FAIL
+            break
+        }
+
+        # 调用::TestCenter::SetupDHCPClient创建DHCP Client
+		if {[catch {set res [TestCenter::SetupDHCPClient $routerName $args]} err] == 1} {
+
+			set msg "调用TestCenter::SetupDHCPClient发生异常，错误信息为: $err ."
+			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
+			set nRet $::ATT_TESTCENTER_FAIL
+			break
+		}
+		# 判断执行结果
+		if {[lindex $res 0] != $TestCenter::ExpectSuccess} {
+
+			set msg [lindex $res 1]
+			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
+			set nRet $::ATT_TESTCENTER_FAIL
+			break
+		} else {
+
+			set msg [lindex $res 1]
+			LOG::DebugInfo $func $::ATTTestCenter::__FILE__  $msg
+
+            # set msg display to user
+            set msg "在端口$portName 创建$routerName 成功！"
+		}
+    }
+
+    return [list array [list [list int $nRet] [list string $msg]]]
+}
+
+
+#*******************************************************************************
+#Function:    ::ATTTestCenter::EnableDHCPClient {routerName}
+#Description:   使能DHCP Client
+#Calls:   无
+#Data Accessed:  无
+#Data Updated:  无
+#Input:
+#    routerName   表示要使能的DHCP Client名称
+#
+#Output:         无
+#Return:
+#    $ATT_TESTCENTER_SUC  $msg        表示成功
+#    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
+#    其他值                           表示失败
+#
+#Others:   无
+#*******************************************************************************
+proc ::ATTTestCenter::EnableDHCPClient {routerName } {
+
+    set nRet $::ATT_TESTCENTER_SUC
+	set func [::__FUNC__]
+	set msg  ""
+
+    foreach once {once} {
+
+        # 调用::TestCenter::EnableDHCPClient使能DHCP Client
+        if {[catch {set res [TestCenter::EnableDHCPClient $routerName]} err] == 1} {
+
+			set msg "调用TestCenter::EnableDHCPClient 发生异常，错误信息为: $err ."
+			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
+			set nRet $::ATT_TESTCENTER_FAIL
+			break
+		}
+        # 判断执行结果
+        if {[lindex $res 0] != $TestCenter::ExpectSuccess} {
+
+			set msg [lindex $res 1]
+			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
+			set nRet $::ATT_TESTCENTER_FAIL
+			break
+		} else {
+
+			set msg [lindex $res 1]
+			LOG::DebugInfo $func $::ATTTestCenter::__FILE__  $msg
+        }
+    }
+
+    return [list array [list [list int $nRet] [list string $msg]]]
+}
+
+
+#*******************************************************************************
+#Function:    ::ATTTestCenter::DisableDHCPClient {routerName}
+#Description:   停止DHCP Client
+#Calls:   无
+#Data Accessed:  无
+#Data Updated:  无
+#Input:
+#    routerName   表示要停止的DHCP Client名称
+#
+#Output:         无
+#Return:
+#    $ATT_TESTCENTER_SUC  $msg        表示成功
+#    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
+#    其他值                           表示失败
+#
+#Others:   无
+#*******************************************************************************
+proc ::ATTTestCenter::DisableDHCPClient {routerName } {
+
+    set nRet $::ATT_TESTCENTER_SUC
+	set func [::__FUNC__]
+	set msg  ""
+
+    foreach once {once} {
+
+        # 调用::TestCenter::DisableDHCPClient停止DHCP Client
+        if {[catch {set res [TestCenter::DisableDHCPClient $routerName]} err] == 1} {
+
+			set msg "调用TestCenter::DisableDHCPClient 发生异常，错误信息为: $err ."
+			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
+			set nRet $::ATT_TESTCENTER_FAIL
+			break
+		}
+        # 判断执行结果
+        if {[lindex $res 0] != $TestCenter::ExpectSuccess} {
+
+			set msg [lindex $res 1]
+			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
+			set nRet $::ATT_TESTCENTER_FAIL
+			break
+		} else {
+
+			set msg [lindex $res 1]
+			LOG::DebugInfo $func $::ATTTestCenter::__FILE__  $msg
+        }
+    }
+
+    return [list array [list [list int $nRet] [list string $msg]]]
+}
+
+
+#*******************************************************************************
+#Function:    ::ATTTestCenter::MethodDHCPClient {routerName method}
+#Description:   DHCP Client协议仿真
+#Calls:   无
+#Data Accessed:  无
+#Data Updated:  无
+#Input:
+#    routerName   表示创建的DHCP client的名字
+#    method:      表示DHCP client仿真的方法，
+#        Bind:       启动DHCP 绑定过程
+#        Release:    释放绑定过程
+#        Renew:      重新启动DHCP 绑定过程
+#        Abort:      停止所有active Session的dhcp router，迫使其状态进入idle
+#        Reboot:     迫使dhcp router重新reboot。即完成一个完整的过程，重新开始新的一个循环。
+#                    Reboot应该发送请求以前分配的IP地址。
+#Output:         无
+#Return:
+#    $ATT_TESTCENTER_SUC  $msg        表示成功
+#    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
+#    其他值                           表示失败
+#
+#Others:   无
+#*******************************************************************************
+proc ::ATTTestCenter::DisableDHCPClient {routerName method} {
+
+    set nRet $::ATT_TESTCENTER_SUC
+	set func [::__FUNC__]
+	set msg  ""
+
+    foreach once {once} {
+
+        # 调用::TestCenter::MethodDHCPClient开始DHCP Client仿真
+        if {[catch {set res [TestCenter::MethodDHCPClient $routerName $method]} err] == 1} {
+
+			set msg "调用TestCenter::MethodDHCPClient 发生异常，错误信息为: $err ."
 			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
 			set nRet $::ATT_TESTCENTER_FAIL
 			break
