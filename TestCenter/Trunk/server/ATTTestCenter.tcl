@@ -2832,6 +2832,317 @@ proc ::ATTTestCenter::StopIGMPRouterQuery {routerName} {
 
 
 #*******************************************************************************
+#Function:    ::ATTTestCenter::CreateMLDHost {portName hostName args}
+#Description:   在指定端口创建MLD Host，并配置MLD host的属性
+#Calls:   无
+#Data Accessed:  无
+#Data Updated:  无
+#Input:
+#    portName   表示需要创建host的端口名，这里的端口名是预约端口时指定的名字
+#    hostName   表示需要创建的host的名字。该名字用于后面对该host的其他操作
+#    args       表示需要创建的MLD host的属性列表。其格式为{-option value}.host的属性有：
+#       -SrcMac    表示源MAC，创建多个host时，默认值依次增1，默认为00:10:94:00:00:02
+#       -SrcMacStep 表示源MAC的变化步长，步长从MAC地址的最后一位依次增加，默认为1
+#       -Ipv6Addr   表示Host起始IPv6地址，默认为2000::2
+#       -Ipv6AddrGateway  表示GateWay的IPv6地址，默认为2000::1
+#       -Ipv6AddrPrefixLen  表示Host IPv6地址Prefix长度，默认为64
+#       -Count              表示Host IP、MAC地址个数，默认为1
+#       -Increase           表示IP地址增幅，默认为1
+#       -ProtocolType       表示Protocol的类型。合法值：MLDv1/MLDv2。默认为MLDv1
+#       -SendGroupRate      指明MLD Host发送组播协议报文时，发送报文的速率，单位fps默认为线速
+#       -Active             表示MLD Host会话是否激活，默认为TRUE
+#       -ForceRobustJoin        指明当第一个MLD host加入group时，是否连续发送2个，默认为FALSE
+#       -ForceLeave             指明当除最后一个之外的MLD Host从group中离开时，是否发送leave报文，默认为FALSE
+#       -UnsolicitedReportInterval 指明MLD host发送unsolicited report的时间间隔，默认为10
+#       -InsertCheckSumErrors      指明是否在MLD Host发送的报文中插入Checksum error，默认为FALSE
+#       -InsertLengthErrors        指明是否在MLD Host发送的报文中插入Length error，默认为FALSE
+#
+#Output:         无
+#Return:
+#    $ATT_TESTCENTER_SUC  $msg        表示成功
+#    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
+#    其他值                           表示失败
+#
+#Others:   无
+#*******************************************************************************
+proc ::ATTTestCenter::CreateMLDHost {portName hostName args} {
+
+    set nRet $::ATT_TESTCENTER_SUC
+	set func [::__FUNC__]
+	set msg  ""
+	set IntName $portName
+
+    foreach once {once} {
+
+        # 去掉args外层{}
+        if {[llength $args] == 1} {
+            set args [lindex $args 0]
+        }
+
+        # 判断是否要添加vlan
+        set index [lsearch -nocase $args -EnableVlan]
+        if {$index != -1} {
+
+            set EnableVlan [lindex $args [expr $index + 1]]
+            set args [lreplace $args $index [expr $index + 1]]
+        } else  {
+            set EnableVlan disable
+        }
+
+        # 如果要添加vlan，需要先创建vlan子接口，然后再用子接口创建host
+        if {[string tolower $EnableVlan] == "enable"} {
+            # 获取子接口的配置信息
+            set index [lsearch -nocase $args -VlanId]
+            if {$index != -1} {
+                set VlanId [lindex $args [expr $index + 1]]
+                set args [lreplace $args $index [expr $index + 1]]
+            } else  {
+                set VlanId 100
+            }
+
+            set index [lsearch -nocase $args -VlanPriority]
+            if {$index != -1} {
+                set VlanPriority [lindex $args [expr $index + 1]]
+                set args [lreplace $args $index [expr $index + 1]]
+            } else  {
+                set VlanPriority 0
+            }
+
+            # 调用::TestCenter::SetupVlan创建子接口
+            set vlanName vlan_$hostName
+            if {[catch {set res [TestCenter::SetupVlan $portName $vlanName -VlanId $VlanId -VlanPriority $VlanPriority]} err] == 1} {
+
+                set msg "调用TestCenter::SetupVlan发生异常，错误信息为: $err ."
+                LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
+                set nRet $::ATT_TESTCENTER_FAIL
+                break
+            }
+            # 判断执行结果
+            if {[lindex $res 0] != $TestCenter::ExpectSuccess} {
+
+                set msg [lindex $res 1]
+                LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
+                set nRet $::ATT_TESTCENTER_FAIL
+                break
+            }
+            LOG::DebugInfo $func $::ATTTestCenter::__FILE__  "创建Vlan子接口成功。"
+            set IntName $vlanName
+        }
+
+        # 调用::TestCenter::SetupHost创建host
+		if {[catch {set res [TestCenter::SetupHost $IntName $hostName -IpVersion ipv6 -HostType MldHost]} err] == 1} {
+
+			set msg "调用TestCenter::SetupHost发生异常，错误信息为: $err ."
+			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
+			set nRet $::ATT_TESTCENTER_FAIL
+			break
+		}
+		# 判断执行结果
+		if {[lindex $res 0] != $TestCenter::ExpectSuccess} {
+
+			set msg [lindex $res 1]
+			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
+			set nRet $::ATT_TESTCENTER_FAIL
+			break
+		}
+
+		# 调用::TestCenter::SetupMldHost创建MLD host
+		if {[catch {set res [TestCenter::SetupMLDHost $hostName $args]} err] == 1} {
+
+			set msg "调用TestCenter::SetupMLDHost发生异常，错误信息为: $err ."
+			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
+			set nRet $::ATT_TESTCENTER_FAIL
+			break
+		}
+		# 判断执行结果
+		if {[lindex $res 0] != $TestCenter::ExpectSuccess} {
+
+			set msg [lindex $res 1]
+			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
+			set nRet $::ATT_TESTCENTER_FAIL
+			break
+		} else {
+
+			set msg [lindex $res 1]
+			LOG::DebugInfo $func $::ATTTestCenter::__FILE__  $msg
+
+            # set msg display to user
+            set msg "在端口$portName 创建$hostName 成功！"
+		}
+    }
+
+    return [list array [list [list int $nRet] [list string $msg]]]
+}
+
+
+#*******************************************************************************
+#Function:    ::ATTTestCenter::SetupMLDGroupPool {hostName groupPoolName startIP args}
+#Description:   创建或配置MLD GroupPool
+#Calls:   无
+#Data Accessed:  无
+#Data Updated:  无
+#Input:
+#    hostName      表示要创建或配置MLD GroupPool的主机名
+#    groupPoolName 表示MLD Group的名称标识，要求在当前 MLD Host 唯一
+#    startIP       表示Group 起始 IP 地址，取值约束：String，IPv6的地址值
+#    args          表示IGMP Group pool的属性列表,格式为{-option value}.具体属性描述如下：
+#       -PrefixLen       表示IP 地址前缀长度，取值范围：9到128，默认为64
+#       -GroupCnt        表示Group 个数，取值约束：32位正整数，默认为1
+#       -GroupIncrement  表示Group IP 地址的增幅，取值范围：32为正整数，默认为1
+#       -SrcStartIP       表示起始主机 IP 地址（MLDv2），取值约束：String，默认为2000::3
+#       -SrcCnt           表示主机地址个数（MLDv2），取值范围：32位整数，默认为1
+#       -SrcIncrement     表示主机 IP 地址增幅（MLDv2），取值范围：32位整数，默认为1
+#       -SrcPrefixLen     表示主机 IP 地址前缀长度（MLDv2），取值范围：1到128，默认为64
+#Output:         无
+#Return:
+#    $ATT_TESTCENTER_SUC  $msg        表示成功
+#    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
+#    其他值                           表示失败
+#
+#Others:   无
+#*******************************************************************************
+proc ::ATTTestCenter::SetupMLDGroupPool {hostName groupPoolName startIP args} {
+
+    set nRet $::ATT_TESTCENTER_SUC
+	set func [::__FUNC__]
+	set msg  ""
+
+    foreach once {once} {
+
+        # 调用::TestCenter::SetupIGMPGroupPool创建IGMP GroupPool
+		if {[catch {set res [TestCenter::SetupMLDGroupPool $hostName $groupPoolName $startIP $args]} err] == 1} {
+
+			set msg "调用TestCenter::SetupMLDGroupPool发生异常，错误信息为: $err ."
+			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
+			set nRet $::ATT_TESTCENTER_FAIL
+			break
+		}
+		# 判断执行结果
+		if {[lindex $res 0] != $TestCenter::ExpectSuccess} {
+
+			set msg [lindex $res 1]
+			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
+			set nRet $::ATT_TESTCENTER_FAIL
+			break
+		} else {
+
+			set msg [lindex $res 1]
+			LOG::DebugInfo $func $::ATTTestCenter::__FILE__  $msg
+
+            # set msg display to user
+            set msg "在$hostName 创建$groupPoolName 成功！"
+		}
+	}
+
+	return [list array [list [list int $nRet] [list string $msg]]]
+}
+
+
+#*******************************************************************************
+#Function:    ::ATTTestCenter::SendMLDLeave {hostName {groupPoolList ""}}
+#Description:   向groupPoolList指定的组播组发送MLD leave（组播离开）报文
+#Calls:   无
+#Data Accessed:  无
+#Data Updated:  无
+#Input:
+#    hostName      表示要发送报文的主机名
+#    groupPoolList 表示MLD Group 的名称标识列表,不指定表示针对所有group
+#
+#Output:         无
+#Return:
+#    $ATT_TESTCENTER_SUC  $msg        表示成功
+#    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
+#    其他值                           表示失败
+#
+#Others:   无
+#*******************************************************************************
+proc ::ATTTestCenter::SendMLDLeave {hostName {groupPoolList ""}} {
+
+    set nRet $::ATT_TESTCENTER_SUC
+	set func [::__FUNC__]
+	set msg  ""
+
+    foreach once {once} {
+
+		# 调用::TestCenter::SendMLDLeave
+		if {[catch {set res [TestCenter::SendMLDLeave $hostName $groupPoolList]} err] == 1} {
+
+			set msg "调用TestCenter::SendMLDLeave发生异常，错误信息为: $err ."
+			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
+			set nRet $::ATT_TESTCENTER_FAIL
+			break
+		}
+		# 判断执行结果
+		if {[lindex $res 0] != $TestCenter::ExpectSuccess} {
+
+			set msg [lindex $res 1]
+			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
+			set nRet $::ATT_TESTCENTER_FAIL
+			break
+		} else {
+
+			set msg [lindex $res 1]
+			LOG::DebugInfo $func $::ATTTestCenter::__FILE__  $msg
+		}
+	}
+
+	return [list array [list [list int $nRet] [list string $msg]]]
+}
+
+
+#*******************************************************************************
+#Function:    ::ATTTestCenter::SendMLDReport {hostName {groupPoolList ""}}
+#Description:   向groupPoolList指定的组播组发送MLD Report（组播加入）报文
+#Calls:   无
+#Data Accessed:  无
+#Data Updated:  无
+#Input:
+#    hostName      表示要发送报文的主机名
+#    groupPoolList 表示MLD Group 的名称标识列表,不指定表示针对所有group
+#
+#Output:         无
+#Return:
+#    $ATT_TESTCENTER_SUC  $msg        表示成功
+#    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
+#    其他值                           表示失败
+#
+#Others:   无
+#*******************************************************************************
+proc ::ATTTestCenter::SendMLDReport {hostName {groupPoolList ""}} {
+
+	set nRet $::ATT_TESTCENTER_SUC
+	set func [::__FUNC__]
+	set msg  ""
+
+	foreach once {once} {
+
+		# 调用::TestCenter::SendMLDReport
+		if {[catch {set res [TestCenter::SendMLDReport $hostName $groupPoolList]} err] == 1} {
+
+			set msg "调用TestCenter::SendMLDReport发生异常，错误信息为: $err ."
+			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
+			set nRet $::ATT_TESTCENTER_FAIL
+			break
+		}
+		# 判断执行结果
+		if {[lindex $res 0] != $TestCenter::ExpectSuccess} {
+
+			set msg [lindex $res 1]
+			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
+			set nRet $::ATT_TESTCENTER_FAIL
+			break
+		} else {
+
+			set msg [lindex $res 1]
+			LOG::DebugInfo $func $::ATTTestCenter::__FILE__  $msg
+		}
+	}
+
+	return [list array [list [list int $nRet] [list string $msg]]]
+}
+
+
+#*******************************************************************************
 #Function:    ::ATTTestCenter::SaveConfigAsXML { path }
 #Description:  将脚本配置保存为xml文件
 #Calls:   无

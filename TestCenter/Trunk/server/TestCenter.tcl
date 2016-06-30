@@ -1216,6 +1216,305 @@ proc ::TestCenter::SendIGMPReport {hostName {groupPoolList ""}} {
 
 
 #*******************************************************************************
+#Function:    ::TestCenter::SetupMLDHost {hostName args}
+#Description:   配置MLD Host
+#Calls:   无
+#Data Accessed:  无
+#Data Updated:  无
+#Input:
+#    hostName      表示要配置的MLD主机名
+#    args          表示MLD host的属性列表,格式为{-option value}.具体属性描述如下：
+#       -SrcMac    表示源MAC，创建多个host时，默认值依次增1，默认为00:10:94:00:00:02
+#       -SrcMacStep 表示源MAC的变化步长，步长从MAC地址的最后一位依次增加，默认为1
+#       -Ipv6Addr   表示Host起始IPv6地址，默认为2000::2
+#       -Ipv6AddrGateway  表示GateWay的IPv6地址，默认为2000::1
+#       -Ipv6AddrPrefixLen  表示Host IPv6地址Prefix长度，默认为64
+#       -Count              表示Host IP、MAC地址个数，默认为1
+#       -Increase           表示IP地址增幅，默认为1
+#       -ProtocolType       表示Protocol的类型。合法值：MLDv1/MLDv2。默认为MLDv1
+#       -SendGroupRate      指明MLD Host发送组播协议报文时，发送报文的速率，单位fps默认为线速
+#       -Active             表示MLD Host会话是否激活，默认为TRUE
+#       -ForceRobustJoin        指明当第一个MLD host加入group时，是否连续发送2个，默认为FALSE
+#       -ForceLeave             指明当除最后一个之外的MLD Host从group中离开时，是否发送leave报文，默认为FALSE
+#       -UnsolicitedReportInterval 指明MLD host发送unsolicited report的时间间隔，默认为10
+#       -InsertCheckSumErrors      指明是否在MLD Host发送的报文中插入Checksum error，默认为FALSE
+#       -InsertLengthErrors        指明是否在MLD Host发送的报文中插入Length error，默认为FALSE
+#
+#Output:         无
+#Return:
+#    list $TestCenter::ExpectSuccess $msg          表示成功
+#    list $TestCenter::FunctionExecuteError  $msg  表示调用函数失败
+#    其他值                                        表示失败
+#
+#Others:   无
+#*******************************************************************************
+proc ::TestCenter::SetupMLDHost {hostName args} {
+
+	set log [LOG::init TestCenter_SetupMLDHost]
+	set errMsg ""
+
+	foreach once {once} {
+		# 检查参数hostName指定的对象是否存在，如果不存在，返回失败
+		set tmpInfo [array get TestCenter::object $hostName]
+		if {$tmpInfo == ""} {
+			set errMsg "$hostName不存在，无法配置MLD host."
+			break
+		}
+
+		# 组建命令
+		if {$args != ""} {
+			set tmpCmd  "$hostName SetSession"
+			for {set i 0} {$i<10} {incr i} {
+				if {[llength $args] == 1} {
+					set args [lindex $args 0]
+				} else {
+					break
+				}
+			}
+			foreach {option value} $args {
+				lappend tmpCmd $option $value
+			}
+
+			LOG::DebugInfo $log [expr $[namespace current]::currentFileName] "RUN CMD: $tmpCmd"
+			# 执行命令
+			if {[catch {set res [eval $tmpCmd]} err] == 1} {
+				set errMsg "配置MLD host发生异常，错误信息为:$err ."
+				break
+			}
+			if {$res != 0} {
+				set errMsg "配置MLD host失败，返回值为:$res ."
+				break
+			}
+		} else {
+			set errMsg "未传入MLD host的任何属性，无法配置MLD host"
+			break
+		}
+
+		set errMsg "配置MLD host成功。"
+		return [list $TestCenter::ExpectSuccess $errMsg]
+	}
+	LOG::DebugErr $log [expr $[namespace current]::currentFileName] $errMsg
+	return [list $TestCenter::FunctionExecuteError $errMsg]
+}
+
+
+#*******************************************************************************
+#Function:    ::TestCenter::SetupMLDGroupPool {hostName groupPoolName startIP args}
+#Description:   创建或配置MLD GroupPool
+#Calls:   无
+#Data Accessed:  无
+#Data Updated:  无
+#Input:
+#    hostName      表示要创建或配置MLD GroupPool的主机名
+#    groupPoolName 表示MLD Group的名称标识，要求在当前 MLD Host 唯一
+#    startIP       表示Group 起始 IP 地址，取值约束：IPV6的地址值（MLD）
+#    args          表示IGMP Group pool的属性列表,格式为{-option value}.具体属性描述如下：
+#       -PrefixLen       表示IP 地址前缀长度，取值范围：9到128，默认为64
+#       -GroupCnt        表示Group 个数，取值约束：32位正整数，默认为1
+#       -GroupIncrement  表示Group IP 地址的增幅，取值范围：32为正整数，默认为1
+#       -SrcStartIP       起始主机IP地址（MLDv2），取值范围：String ipv6格式地址值，默认为2000::3
+#       -SrcCnt           表示主机地址个数（MLDv2），取值范围：32位整数，默认为1
+#       -SrcIncrement     表示主机 IP 地址增幅（MLDv2），取值范围：32位整数，默认为1
+#       -SrcPrefixLen     表示主机 IP 地址前缀长度（MLDv2），取值范围：1到128，默认为64
+#
+#Output:         无
+#Return:
+#    list $TestCenter::ExpectSuccess $msg          表示成功
+#    list $TestCenter::FunctionExecuteError  $msg  表示调用函数失败
+#    其他值                                        表示失败
+#
+#Others:   无
+#*******************************************************************************
+proc ::TestCenter::SetupMLDGroupPool {hostName groupPoolName startIP args} {
+
+	set log [LOG::init TestCenter_SetupMLDGroupPool]
+	set errMsg ""
+
+	foreach once {once} {
+		# 检查参数hostName指定的对象是否存在，如果不存在，返回失败
+		set tmpInfo [array get TestCenter::object $hostName]
+		if {$tmpInfo == ""} {
+			set errMsg "$hostName不存在，无法配置MLD host."
+			break
+		}
+
+		# 组建命令
+		# 检查groupPoolName是否已经存在，如果存在则对它进行配置，否则新建
+		set tmpInfo [array get TestCenter::object $groupPoolName]
+		if {$tmpInfo == ""} {
+			set tmpCmd "$hostName CreateGroupPool -GroupPoolName $groupPoolName -StartIP $startIP"
+		} else {
+			set tmpCmd "$hostName SetGroupPool -GroupPoolName $groupPoolName -StartIP $startIP"
+		}
+
+		if {$args != ""} {
+			for {set i 0} {$i<10} {incr i} {
+				if {[llength $args] == 1} {
+					set args [lindex $args 0]
+				} else {
+					break
+				}
+			}
+			foreach {option value} $args {
+				lappend tmpCmd $option $value
+			}
+
+			LOG::DebugInfo $log [expr $[namespace current]::currentFileName] "RUN CMD: $tmpCmd"
+			# 执行命令
+			if {[catch {set res [eval $tmpCmd]} err] == 1} {
+				set errMsg "创建或配置MLD GroupPool发生异常，错误信息为:$err ."
+				break
+			}
+			if {$res != 0} {
+				set errMsg "创建或配置MLD GroupPool失败，返回值为:$res ."
+				break
+			}
+		}
+
+		set errMsg "创建或配置MLD GroupPool成功。"
+		return [list $TestCenter::ExpectSuccess $errMsg]
+	}
+	LOG::DebugErr $log [expr $[namespace current]::currentFileName] $errMsg
+	return [list $TestCenter::FunctionExecuteError $errMsg]
+}
+
+
+#*******************************************************************************
+#Function:    ::TestCenter::SendMLDLeave {hostName {groupPoolList ""}}
+#Description:   向groupPoolList指定的组播组发送MLD leave（组播离开）报文
+#Calls:   无
+#Data Accessed:  无
+#Data Updated:  无
+#Input:
+#    hostName      表示要发送报文的主机名
+#    groupPoolList 表示MLD Group 的名称标识列表,不指定表示针对所有group
+#
+#Output:         无
+#Return:
+#    list $TestCenter::ExpectSuccess $msg          表示成功
+#    list $TestCenter::FunctionExecuteError  $msg  表示调用函数失败
+#    其他值                                        表示失败
+#
+#Others:   无
+#*******************************************************************************
+proc ::TestCenter::SendMLDLeave {hostName {groupPoolList ""}} {
+
+	set log [LOG::init TestCenter_SendMLDLeave]
+	set errMsg ""
+
+	foreach once {once} {
+		# 检查参数hostName指定的对象是否存在，如果不存在，返回失败
+		set tmpInfo [array get TestCenter::object $hostName]
+		if {$tmpInfo == ""} {
+			set errMsg "$hostName不存在，无法发送MLD leave报文."
+			break
+		}
+
+		# 组建命令
+		if {$groupPoolList == ""} {
+			set tmpCmd "$hostName SendLeave"
+		} else {
+			for {set i 0} {$i<10} {incr i} {
+				if {[llength $groupPoolList] == 1} {
+					set groupPoolList [lindex $groupPoolList 0]
+				} else {
+					break
+				}
+			}
+			set tmpCmd "$hostName SendLeave -GroupPoolList $groupPoolList"
+		}
+
+		if {$groupPoolList == ""} {
+			set groupPoolList "所有的组播组"
+		}
+
+		LOG::DebugInfo $log [expr $[namespace current]::currentFileName] "RUN CMD: $tmpCmd"
+		if {[catch {set res [eval $tmpCmd]} err] == 1} {
+			set errMsg "$hostName 向$groupPoolList 发送MLD Leave报文发生异常，错误信息为:$err ."
+			break
+		}
+		if {$res != 0} {
+			set errMsg "$hostName 向$groupPoolList 发送MLD Leave报文失败，返回值为:$res ."
+			break
+		}
+
+		set errMsg "$hostName 向$groupPoolList 发送MLD Leave报文成功。"
+
+		return [list $TestCenter::ExpectSuccess $errMsg]
+	}
+	LOG::DebugErr $log [expr $[namespace current]::currentFileName] $errMsg
+	return [list $TestCenter::FunctionExecuteError $errMsg]
+}
+
+
+#*******************************************************************************
+#Function:    ::TestCenter::SendMLDReport {hostName {groupPoolList ""}}
+#Description:   向groupPoolList指定的组播组发送MLD Join(组播加入)报文
+#Calls:   无
+#Data Accessed:  无
+#Data Updated:  无
+#Input:
+#    hostName      表示要发送报文的主机名
+#    groupPoolList 表示MLD Group 的名称标识列表,不指定表示针对所有group
+#
+#Output:         无
+#Return:
+#    list $TestCenter::ExpectSuccess $msg          表示成功
+#    list $TestCenter::FunctionExecuteError  $msg  表示调用函数失败
+#    其他值                                        表示失败
+#
+#Others:   无
+#*******************************************************************************
+proc ::TestCenter::SendMLDReport {hostName {groupPoolList ""}} {
+
+	set log [LOG::init TestCenter_SendMLDReport]
+	set errMsg ""
+
+	foreach once {once} {
+		# 检查参数hostName指定的对象是否存在，如果不存在，返回失败
+		set tmpInfo [array get TestCenter::object $hostName]
+		if {$tmpInfo == ""} {
+			set errMsg "$hostName不存在，无法发送MLD Join报文."
+			break
+		}
+
+		# 组建命令
+		if {$groupPoolList == ""} {
+			set tmpCmd "$hostName SendReport"
+		} else {
+			for {set i 0} {$i<10} {incr i} {
+				if {[llength $groupPoolList] == 1} {
+					set groupPoolList [lindex $groupPoolList 0]
+				} else {
+					break
+				}
+			}
+			set tmpCmd "$hostName SendReport -GroupPoolList $groupPoolList"
+		}
+
+		if {$groupPoolList == ""} {
+			set groupPoolList "所有的组播组"
+		}
+
+		LOG::DebugInfo $log [expr $[namespace current]::currentFileName] "RUN CMD: $tmpCmd"
+		if {[catch {set res [eval $tmpCmd]} err] == 1} {
+			set errMsg "$hostName 向$groupPoolList 发送MLD Join报文发生异常，错误信息为:$err ."
+			break
+		}
+		if {$res != 0} {
+			set errMsg "$hostName 向$groupPoolList 发送MLD Join报文失败，返回值为:$res ."
+			break
+		}
+
+		set errMsg "$hostName 向$groupPoolList 发送MLD Join报文成功。"
+		return [list $TestCenter::ExpectSuccess $errMsg]
+	}
+	LOG::DebugErr $log [expr $[namespace current]::currentFileName] $errMsg
+	return [list $TestCenter::FunctionExecuteError $errMsg]
+}
+
+
+#*******************************************************************************
 #Function:    ::TestCenter::SetupRouter {portName routerName routerType args}
 #Description:   在指定端口创建router，并配置router的属性
 #Calls:   无

@@ -1614,6 +1614,223 @@ proc ::ATTTestCenter::SendIGMPReport {hostName args} {
 
 
 #*******************************************************************************
+#Function:    ::ATTTestCenter::CreateMLDHost {portName hostName args}
+#Description:   在指定端口创建MLD Host，并配置MLD host的属性
+#Calls:   无
+#Data Accessed:  无
+#Data Updated:  无
+#Input:
+#    portName   表示需要创建host的端口名，这里的端口名是预约端口时指定的名字
+#    hostName   表示需要创建的host的名字。该名字用于后面对该host的其他操作
+#    args       表示需要创建的MLD host的属性列表。其格式为{-option value}.host的属性有：
+#       -SrcMac    表示源MAC，创建多个host时，默认值依次增1，默认为00:10:94:00:00:02
+#       -SrcMacStep 表示源MAC的变化步长，步长从MAC地址的最后一位依次增加，默认为1
+#       -Ipv6Addr   表示Host起始IPv6地址，默认为2000::2
+#       -Ipv6AddrGateway  表示GateWay的IPv6地址，默认为2000::1
+#       -Ipv6AddrPrefixLen  表示Host IPv6地址Prefix长度，默认为64
+#       -Count              表示Host IP、MAC地址个数，默认为1
+#       -Increase           表示IP地址增幅，默认为1
+#       -ProtocolType       表示Protocol的类型。合法值：MLDv1/MLDv2。默认为MLDv1
+#       -SendGroupRate      指明MLD Host发送组播协议报文时，发送报文的速率，单位fps默认为线速
+#       -Active             表示MLD Host会话是否激活，默认为TRUE
+#       -ForceRobustJoin        指明当第一个MLD host加入group时，是否连续发送2个，默认为FALSE
+#       -ForceLeave             指明当除最后一个之外的MLD Host从group中离开时，是否发送leave报文，默认为FALSE
+#       -UnsolicitedReportInterval 指明MLD host发送unsolicited report的时间间隔，默认为10
+#       -InsertCheckSumErrors      指明是否在MLD Host发送的报文中插入Checksum error，默认为FALSE
+#       -InsertLengthErrors        指明是否在MLD Host发送的报文中插入Length error，默认为FALSE
+#
+#Output:         无
+#Return:
+#    $ATT_TESTCENTER_SUC  $msg        表示成功
+#    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
+#    其他值                           表示失败
+#
+#Others:   无
+#*******************************************************************************
+proc ::ATTTestCenter::CreateMLDHost {portName hostName args} {
+
+	# 组建传参列表
+    set tmpArgs ""
+    foreach var $args {
+        lappend tmpArgs [list string $var]
+    }
+
+    # 通过xmlrpc::call调用server端的相应接口
+    if {[catch { set ret [xmlrpc::call $::ATTTestCenter::url "::ATTTestCenter::CreateMLDHost" \
+                                      [list [list string $portName] \
+									        [list string $hostName] \
+	                                        [list array $tmpArgs] ] ] } err] == 1} {
+
+        set msg "调用xmlrpc::call发生异常，错误信息为: $err ."
+        set nRet $::ATT_TESTCENTER_FAIL
+        return [list $nRet $msg]
+    }
+    # xmlrpc::call返回结果格式为{{} result},其中result为调用接口实际返回值
+	return [lindex $ret 1]
+}
+
+
+#*******************************************************************************
+#Function:    ::ATTTestCenter::SetupMLDGroupPool {hostName groupPoolName startIP args}
+#Description:   创建或配置MLD GroupPool
+#Calls:   无
+#Data Accessed:  无
+#Data Updated:  无
+#Input:
+#    hostName      表示要创建或配置MLD GroupPool的主机名
+#    groupPoolName 表示MLD Group的名称标识，要求在当前 MLD Host 唯一
+#    startIP       表示Group 起始 IP 地址，取值约束：String，IPv6的地址值
+#    args          表示MLD Group pool的属性列表,格式为{-option value}.具体属性描述如下：
+#       -PrefixLen       表示IP 地址前缀长度，取值范围：9到128，默认为64
+#       -GroupCnt        表示Group 个数，取值约束：32位正整数，默认为1
+#       -GroupIncrement  表示Group IP 地址的增幅，取值范围：32为正整数，默认为1
+#       -SrcStartIP       表示起始主机 IP 地址（MLDv2），取值约束：String，默认为2000::3
+#       -SrcCnt           表示主机地址个数（MLDv2），取值范围：32位整数，默认为1
+#       -SrcIncrement     表示主机 IP 地址增幅（MLDv2），取值范围：32位整数，默认为1
+#       -SrcPrefixLen     表示主机 IP 地址前缀长度（MLDv2），取值范围：1到128，默认为64
+#Output:         无
+#Return:
+#    $ATT_TESTCENTER_SUC  $msg        表示成功
+#    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
+#    其他值                           表示失败
+#
+#Others:   无
+#*******************************************************************************
+proc ::ATTTestCenter::SetupMLDGroupPool {hostName groupPoolName startIP args} {
+
+	# 组建传参列表
+    set tmpArgs ""
+    foreach var $args {
+        lappend tmpArgs [list string $var]
+    }
+
+    # 通过xmlrpc::call调用server端的相应接口
+    if {[catch { set ret [xmlrpc::call $::ATTTestCenter::url "::ATTTestCenter::SetupMLDGroupPool" \
+                                      [list [list string $hostName] \
+									        [list string $groupPoolName] \
+	                                        [list string $startIP] \
+	                                        [list array $tmpArgs] ] ] } err] == 1} {
+
+        set msg "调用xmlrpc::call发生异常，错误信息为: $err ."
+        set nRet $::ATT_TESTCENTER_FAIL
+        return [list $nRet $msg]
+    }
+    # xmlrpc::call返回结果格式为{{} result},其中result为调用接口实际返回值
+	return [lindex $ret 1]
+}
+
+
+#*******************************************************************************
+#Function:    ::ATTTestCenter::SendMLDLeave {hostName args}
+#Description:   向groupPoolList指定的组播组发送MLD leave（组播离开）报文
+#Calls:   无
+#Data Accessed:  无
+#Data Updated:  无
+#Input:
+#    hostName      表示要发送报文的主机名
+#    args         表示MLD Group 的名称标识列表,不指定表示针对所有group
+#
+#Output:         无
+#Return:
+#    $ATT_TESTCENTER_SUC  $msg        表示成功
+#    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
+#    其他值                           表示失败
+#
+#Others:   无
+#*******************************************************************************
+proc ::ATTTestCenter::SendMLDLeave {hostName args} {
+
+    # 组建传参列表
+    set tmpArgs ""
+	if {[llength $args] == 1} {
+		set tmpArgs $args
+
+		# 通过xmlrpc::call调用server端的相应接口
+        if {[catch { set ret [xmlrpc::call $::ATTTestCenter::url "::ATTTestCenter::SendMLDLeave" \
+                                          [list [list string $hostName] \
+                                                [list string $tmpArgs] ] ] } err] == 1} {
+
+            set msg "调用xmlrpc::call发生异常，错误信息为: $err ."
+            set nRet $::ATT_TESTCENTER_FAIL
+            return [list $nRet $msg]
+        }
+	} else {
+		foreach var $args {
+			lappend tmpArgs [list string $var]
+		}
+
+		# 通过xmlrpc::call调用server端的相应接口
+        if {[catch { set ret [xmlrpc::call $::ATTTestCenter::url "::ATTTestCenter::SendMLDLeave" \
+                                          [list [list string $hostName] \
+                                                [list array $tmpArgs] ] ] } err] == 1} {
+
+            set msg "调用xmlrpc::call发生异常，错误信息为: $err ."
+            set nRet $::ATT_TESTCENTER_FAIL
+            return [list $nRet $msg]
+        }
+	}
+
+    # xmlrpc::call返回结果格式为{{} result},其中result为调用接口实际返回值
+	return [lindex $ret 1]
+}
+
+
+#*******************************************************************************
+#Function:    ::ATTTestCenter::SendMLDReport {hostName args}
+#Description:   向groupPoolList指定的组播组发送MLD leave（组播加入）报文
+#Calls:   无
+#Data Accessed:  无
+#Data Updated:  无
+#Input:
+#    hostName      表示要发送报文的主机名
+#    args         表示MLD Group 的名称标识列表,不指定表示针对所有group
+#
+#Output:         无
+#Return:
+#    $ATT_TESTCENTER_SUC  $msg        表示成功
+#    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
+#    其他值                           表示失败
+#
+#Others:   无
+#*******************************************************************************
+proc ::ATTTestCenter::SendMLDReport {hostName args} {
+
+    # 组建传参列表
+    set tmpArgs ""
+	if {[llength $args] == 1} {
+		set tmpArgs $args
+
+		# 通过xmlrpc::call调用server端的相应接口
+        if {[catch { set ret [xmlrpc::call $::ATTTestCenter::url "::ATTTestCenter::SendMLDReport" \
+                                          [list [list string $hostName] \
+                                                [list string $tmpArgs] ] ] } err] == 1} {
+
+            set msg "调用xmlrpc::call发生异常，错误信息为: $err ."
+            set nRet $::ATT_TESTCENTER_FAIL
+            return [list $nRet $msg]
+        }
+	} else {
+		foreach var $args {
+			lappend tmpArgs [list string $var]
+		}
+
+		# 通过xmlrpc::call调用server端的相应接口
+        if {[catch { set ret [xmlrpc::call $::ATTTestCenter::url "::ATTTestCenter::SendMLDReport" \
+                                          [list [list string $hostName] \
+                                                [list array $tmpArgs] ] ] } err] == 1} {
+
+            set msg "调用xmlrpc::call发生异常，错误信息为: $err ."
+            set nRet $::ATT_TESTCENTER_FAIL
+            return [list $nRet $msg]
+        }
+	}
+
+    # xmlrpc::call返回结果格式为{{} result},其中result为调用接口实际返回值
+	return [lindex $ret 1]
+}
+
+
+#*******************************************************************************
 #Function:    ::ATTTestCenter::CreateIGMPRouter {portName routerName routerIp args}
 #Description:   配置IGMP router
 #Calls:   无

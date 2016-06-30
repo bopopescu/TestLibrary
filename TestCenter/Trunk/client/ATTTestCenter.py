@@ -3675,6 +3675,298 @@ class ATTTestCenter(object):
         return n_ret, str_ret
 
 
+    def testcenter_create_mld_host(self, port_name, host_name, dict_args):
+        """
+        功能描述：创建MLD host，并配置相关属性
+
+        参数：
+            port_name: 表示要创建MLD host的端口别名，必须是预约端口时指定的名字
+            host_name: 表示创建的host的名字
+            dict_args: 表示可选参数字典,具体参数描述如下：
+                src_mac: 表示源MAC，创建多个host时，默认值依次增1，默认为00:10:94:00:00:02
+                src_mac_step: 表示源MAC的变化步长，步长从MAC地址的最后一位依次增加，默认为1
+                ipv6_addr: 表示Host起始IPv6地址，默认为2000::2
+                ipv6_addr_gatewayGateway: 表示GateWay的IPv6地址，默认为2000::1
+                ipv6_addr_prefix_len: 表示Host IPv6地址Prefix长度，默认为64
+                count: 表示Host IP、MAC地址个数，默认为1
+                increase: 表示IP地址增幅，默认为1
+                protocol_type: 表示Protocol的类型。合法值：MLDv1/MLDv2。默认为MLDv1
+                send_group_rate: 指明MLD Host发送组播协议报文时，发送报文的速率，单位fps默认为线速
+                active: 表示MLD Host会话是否激活，默认为TRUE
+                force_robust_join: 指明当第一个MLD host加入group时，是否连续发送2个，默认为FALSE
+                force_leave: 指明当除最后一个之外的MLD Host从group中离开时，是否发送leave报文，默认为FALSE
+                unsolicited_report_interval: 指明MLD host发送unsolicited report的时间间隔，默认为10
+                insert_checksum_errors: 指明是否在MLD Host发送的报文中插入Checksum error，默认为FALSE
+                insert_length_errors: 指明是否在MLD Host发送的报文中插入Length error，默认为FALSE
+                enable_vlan: 指明是否添加vlan，enable/disable, 默认为disable
+                vlan_id: 指明Vlan id的值，取值范围1-4096， 默认为100
+                vlan_pri: 优先级,取值范围0-7，默认为0
+
+        """
+
+        n_ret = ATT_TESTCENTER_SUC
+        str_ret = ""
+
+        try:
+
+            tmp_dict = dict_args
+
+            # build TCL Command
+            cmd = "::ATTTestCenter::CreateMLDHost %s %s "  % (port_name, host_name)
+
+            # check user input args
+            for var in tmp_dict.keys():
+
+                if var == "src_mac":
+                    cmd = "%s -SrcMac %s" % (cmd, tmp_dict[var])
+
+                elif var == "src_mac_step":
+                    cmd = "%s -SrcMacStep %s" % (cmd, tmp_dict[var])
+
+                elif var == "ipv6_addr":
+                    cmd = "%s -Ipv6Addr %s" % (cmd, tmp_dict[var])
+
+                elif var == "ipv6_addr_gateway":
+                    cmd = "%s -Ipv6AddrGateway %s" % (cmd, tmp_dict[var])
+
+                elif var == "ipv6_addr_prefix_len":
+                    cmd = "%s -Ipv6AddrPrefixLen %s" % (cmd, tmp_dict[var])
+
+                elif var == "count":
+                    cmd = "%s -Count %s" % (cmd, tmp_dict[var])
+
+                elif var == "increase":
+                    cmd = "%s -Increase %s" % (cmd, tmp_dict[var])
+
+                elif var == "protocol_type":
+                    cmd = "%s -ProtocolType %s" % (cmd, tmp_dict[var])
+
+                elif var == "active":
+                    cmd = "%s -Active %s" % (cmd, tmp_dict[var])
+
+                elif var == "force_robust_join":
+                    cmd = "%s -ForceRobustJoin %s" % (cmd, tmp_dict[var])
+
+                elif var == "force_leave":
+                    cmd = "%s -ForceLeave %s" % (cmd, tmp_dict[var])
+
+                elif var == "unsolicited_report_interval":
+                    cmd = "%s -UnsolicitedReportInterval %s" % (cmd, tmp_dict[var])
+
+                elif var == "insert_checksum_errors":
+                    cmd = "%s -InsertCheckSumErrors %s" % (cmd, tmp_dict[var])
+
+                elif var == "insert_length_errors":
+                    cmd = "%s -InsertLengthErrors %s" % (cmd, tmp_dict[var])
+
+                elif var == "send_group_rate":
+                    cmd = "%s -SendGroupRate %s" % (cmd, tmp_dict[var])
+
+                elif var == "enable_vlan":
+                    cmd = "%s -EnableVlan %s" % (cmd, tmp_dict[var])
+
+                elif var == "vlan_id":
+                    cmd = "%s -VlanId %s" % (cmd, tmp_dict[var])
+
+                elif var == "vlan_pri":
+                    cmd = "%s -VlanPriority %s" % (cmd, tmp_dict[var])
+
+                else:
+                    str_ret = "unsupport argument %s." % var
+                    raise RuntimeError("execute testcenter_create_igmp_host fail, errInfo:%s" % str_ret)
+
+            # execute TCL Command
+            self.tcl_ret = self.tcl.eval(cmd)
+
+            # parse return value
+            if self.tcl_ret:
+                n_ret = int(self.tcl_ret.split(' ', 1)[0])
+                str_ret = self.tcl_ret.split(' ', 1)[1].strip('{}')
+                str_ret = self._convert_coding(str_ret)
+
+            else:
+                n_ret = ATT_TESTCENTER_FAIL
+                str_ret = u"执行TCL command %s 失败，无错误信息返回。" % cmd
+
+        except Exception,e:
+            n_ret = ATT_TESTCENTER_FAIL
+            str_ret = u"执行TCL command %s 发生异常，错误信息为：%s" % (cmd, e)
+
+        return n_ret, str_ret
+
+
+    def testcenter_create_mld_group_pool(self, host_name, group_pool_name, start_ip, dict_args):
+        """
+        功能描述：创建MLD GroupPool, 并配置相关属性
+
+        参数：
+            host_name: 表示要创建MLD GroupPool的主机名
+            group_pool_name: 表示MLD Group的名称标识，要求在当前 MLD Host 唯一
+            start_ip: 表示Group 起始 IP 地址
+            dict_args: 表示可选参数字典,具体参数描述如下：
+                prefix_len: 表示IP 地址前缀长度，取值范围：9到128，默认为64
+                group_cnt: 表示Group 个数，取值约束：32位正整数，默认为1
+                group_increment: 表示Group IP 地址的增幅，取值范围：32为正整数，默认为1
+                src_start_ip: 表示起始主机 IP 地址（MLDv2），取值约束：String，默认为2000::3
+                src_cnt: 表示主机地址个数（MLDv2），取值范围：32位整数，默认为1
+                src_increment: 表示主机 IP 地址增幅（MLDv2），取值范围：32位整数，默认为1
+                src_prefix_len: 表示主机 IP 地址前缀长度（MLDv2），取值范围：1到128，默认为64
+
+        """
+
+        n_ret = ATT_TESTCENTER_SUC
+        str_ret = ""
+
+        try:
+
+            tmp_dict = dict_args
+
+            # build TCL Command
+            cmd = "::ATTTestCenter::SetupMLDGroupPool %s %s %s "  % (host_name, group_pool_name, start_ip)
+
+            # check user input args
+            for var in tmp_dict.keys():
+
+                if var == "prefix_len":
+                    cmd = "%s -PrefixLen %s" % (cmd, tmp_dict[var])
+
+                elif var == "group_cnt":
+                    cmd = "%s -GroupCnt %s" % (cmd, tmp_dict[var])
+
+                elif var == "group_increment":
+                    cmd = "%s -GroupIncrement %s" % (cmd, tmp_dict[var])
+
+                elif var == "src_start_ip":
+                    cmd = "%s -SrcStartIP %s" % (cmd, tmp_dict[var])
+
+                elif var == "src_cnt":
+                    cmd = "%s -SrcCnt %s" % (cmd, tmp_dict[var])
+
+                elif var == "src_increment":
+                    cmd = "%s -SrcIncrement %s" % (cmd, tmp_dict[var])
+
+                elif var == "src_prefix_len":
+                    cmd = "%s -SrcPrefixLen %s" % (cmd, tmp_dict[var])
+
+                else:
+                    str_ret = "unsupport argument %s." % var
+                    raise RuntimeError("execute testcenter_create_igmp_group_pool fail, errInfo:%s" % str_ret)
+
+            # execute TCL Command
+            self.tcl_ret = self.tcl.eval(cmd)
+
+            # parse return value
+            if self.tcl_ret:
+                n_ret = int(self.tcl_ret.split(' ', 1)[0])
+                str_ret = self.tcl_ret.split(' ', 1)[1].strip('{}')
+                str_ret = self._convert_coding(str_ret)
+
+            else:
+                n_ret = ATT_TESTCENTER_FAIL
+                str_ret = u"执行TCL command %s 失败，无错误信息返回。" % cmd
+
+        except Exception,e:
+            n_ret = ATT_TESTCENTER_FAIL
+            str_ret = u"执行TCL command %s 发生异常，错误信息为：%s" % (cmd, e)
+
+        return n_ret, str_ret
+
+
+    def testcenter_send_mld_leave(self, host_name, group_pool_list=""):
+        """
+        功能描述：向指定组播组发送MLD Leave报文
+
+        参数：
+            host_name: 表示要发送报文的host名字
+            group_pool_list: 表示MLD Group 的名称标识列表,不指定表示针对所有group
+
+        """
+
+        n_ret = ATT_TESTCENTER_SUC
+        str_ret = ""
+
+        try:
+            # 将group_pool_list字符串化
+            str_group_pool_list = ""
+
+            # 多个group pool和单个group pool需要分开处理
+            if type(group_pool_list) == type([]):
+                for group_pool in group_pool_list:
+                    str_group_pool_list = "%s %s" % (str_group_pool_list, group_pool)
+            else:
+                str_group_pool_list = group_pool_list
+
+            # build TCL Command
+            cmd = "::ATTTestCenter::SendMLDLeave %s %s"  % (host_name, str_group_pool_list)
+
+            # execute TCL Command
+            self.tcl_ret = self.tcl.eval(cmd)
+
+            # parse return value, in normal case, return valus is {{num} {string}}
+            if self.tcl_ret:
+                n_ret = int(self.tcl_ret.split(' ', 1)[0])
+                str_ret = self.tcl_ret.split(' ', 1)[1].strip('{}')
+                str_ret = self._convert_coding(str_ret)
+
+            else:
+                n_ret = ATT_TESTCENTER_FAIL
+                str_ret = u"执行TCL command %s 失败，无错误信息返回。" % cmd
+
+        except Exception,e:
+            n_ret = ATT_TESTCENTER_FAIL
+            str_ret = u"执行TCL command %s 发生异常，错误信息为：%s" % (cmd, e)
+
+        return n_ret, str_ret
+
+
+    def testcenter_send_mld_report(self, host_name, group_pool_list=""):
+        """
+        功能描述：向指定组播组发送MLD report报文
+
+        参数：
+            host_name: 表示要发送报文的host名字
+            group_pool_list: 表示MLD Group 的名称标识列表,不指定表示针对所有group
+
+        """
+
+        n_ret = ATT_TESTCENTER_SUC
+        str_ret = ""
+
+        try:
+
+            # 将group_pool_list字符串化
+            str_group_pool_list = ""
+
+            # 多个group pool和单个group pool需要分开处理
+            if type(group_pool_list) == type([]):
+                for group_pool in group_pool_list:
+                    str_group_pool_list = "%s %s" % (str_group_pool_list, group_pool)
+            else:
+                str_group_pool_list = group_pool_list
+
+            # build TCL Command
+            cmd = "::ATTTestCenter::SendMLDReport %s %s"  % (host_name, str_group_pool_list)
+
+            # execute TCL Command
+            self.tcl_ret = self.tcl.eval(cmd)
+
+            # parse return value, in normal case, return valus is {{num} {string}}
+            if self.tcl_ret:
+                n_ret = int(self.tcl_ret.split(' ', 1)[0])
+                str_ret = self.tcl_ret.split(' ', 1)[1].strip('{}')
+                str_ret = self._convert_coding(str_ret)
+
+            else:
+                n_ret = ATT_TESTCENTER_FAIL
+                str_ret = u"执行TCL command %s 失败，无错误信息返回。" % cmd
+
+        except Exception,e:
+            n_ret = ATT_TESTCENTER_FAIL
+            str_ret = u"执行TCL command %s 发生异常，错误信息为：%s" % (cmd, e)
+
+        return n_ret, str_ret
+
+
     def testcenter_create_igmp_router(self, port_name, router_name, router_ip, dict_args):
         """
         功能描述：创建IGMP router,并配置相关属性

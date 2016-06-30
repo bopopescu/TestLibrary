@@ -186,6 +186,21 @@ class TestCenter(object):
             return False
 
 
+    def _check_ipv6addr_validity(self, ipv6_addr):
+        """
+        功能描述：检查IPv6地址是否合法，合法返回True，非法返回False
+
+        参数： ipv6_addr: 待检查的IPv6地址
+        """
+
+        regex_ipv6 =    '(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))'
+
+        if re.search(regex_ipv6, ipv6_addr) is not None:
+            return True
+        else:
+            return False
+
+
     def testcenter_connect(self, chassis_addr):
         """
         功能描述：使用TestCenter机框IP地址连接TestCenter
@@ -2906,6 +2921,222 @@ class TestCenter(object):
         str_ret = ""
 
         n_ret, str_ret = self.obj.testcenter_send_igmp_report(host_name, group_pool_list)
+        if n_ret == ATTTestCenter.ATT_TESTCENTER_FAIL:
+            log.user_err(str_ret)
+            raise RuntimeError(str_ret)
+
+        log.user_info(str_ret)
+        return  str_ret
+
+
+    def testcenter_create_mld_host(self, port_name, host_name, *args):
+        """
+        功能描述：在端口创建MLD host，并配置相关属性
+
+        参数：
+
+            port_name: 表示要创建MLD host的端口名
+
+            host_name: 表示创建的host的名字
+
+            args: 表示可选参数，传入的格式为"varname=value",具体参数描述如下：
+
+                src_mac: 表示源MAC，创建多个host时，默认值依次增1，默认为00:10:94:00:00:02
+
+                src_mac_step: 表示源MAC的变化步长，步长从MAC地址的最后一位依次增加，默认为1
+
+                ipv6_addr: 表示Host起始IPv6地址，默认为2000::2
+
+                ipv6_addr_gateway: 表示GateWay的IPv6地址，默认为2000::1
+
+                ipv6_addr_prefix_len: 表示Host IPv6地址Prefix长度，默认为64
+
+                count: 表示Host IP、MAC地址个数，默认为1
+
+                increase: 表示IP地址增幅，默认为1
+
+                protocol_type: 表示Protocol的类型。合法值：MLDv1/MLDv2。默认为MLDv1
+
+                send_group_rate: 指明MLD Host发送组播协议报文时，发送报文的速率，单位fps默认为线速
+
+                active: 表示MLD Host会话是否激活，默认为TRUE
+
+                force_robust_join: 指明当第一个MLD host加入group时，是否连续发送2个，默认为FALSE
+
+                force_leave: 指明当除最后一个之外的MLD Host从group中离开时，是否发送leave报文，默认为FALSE
+
+                unsolicited_report_interval: 指明MLD host发送unsolicited report的时间间隔，默认为10
+
+                insert_checksum_errors: 指明是否在MLD Host发送的报文中插入Checksum error，默认为FALSE
+
+                insert_length_errors: 指明是否在MLD Host发送的报文中插入Length error，默认为FALSE
+
+                enable_vlan: 指明是否添加vlan，enable/disable, 默认为disable
+
+                vlan_id: 指明Vlan id的值，取值范围1-4096， 默认为100
+
+                vlan_pri: 优先级,取值范围0-7，默认为0
+
+        Example:
+        | testcenter create mld host | port1 | host1 | ipv6_addr=2002::1    | ipv6_addr_gateway=fe80::1 |
+        | testcenter create mld host | port2 | host2 | protocol_type=MLDv1  |                           |
+        """
+
+        n_ret = TESTCENTER_SUC
+        str_ret = ""
+
+        for i in [1]:
+            # covert args format
+            n_ret, tmp_ret = self._format_args(args)
+            if n_ret == TESTCENTER_FAIL:
+                str_ret = tmp_ret
+                break
+            else:
+                dict_args = tmp_ret
+
+            # 检测IP地址的合法性
+            if "ipv6_addr" in dict_args:
+                if not self._check_ipv6addr_validity(dict_args["ipv6_addr"]):
+                    n_ret = TESTCENTER_FAIL
+                    str_ret = u"%s 不是合法的IP地址." % dict_args["ipv6_addr"]
+                    break
+
+            if "ipv6_addr_gateway" in dict_args:
+                if not self._check_ipv6addr_validity(dict_args["ipv6_addr_gateway"]):
+                    n_ret = TESTCENTER_FAIL
+                    str_ret = u"%s 不是合法的IP地址." % dict_args["ipv6_addr_gateway"]
+                    break
+
+            n_ret, str_ret = self.obj.testcenter_create_mld_host(port_name, host_name, dict_args)
+            if n_ret == ATTTestCenter.ATT_TESTCENTER_FAIL:
+                n_ret = TESTCENTER_FAIL
+                break
+
+        if n_ret == TESTCENTER_FAIL:
+            log.user_err(str_ret)
+            raise RuntimeError(str_ret)
+
+        log.user_info(str_ret)
+        return  str_ret
+
+
+    def testcenter_create_mld_group_pool(self, host_name, group_pool_name, start_ip, *args):
+        """
+        功能描述：创建MLD GroupPool, 并配置相关属性
+
+        参数：
+
+            host_name: 表示要创建IGMP GroupPool的主机名
+
+            group_pool_name: 表示IGMP Group的名称标识，要求在当前 IGMP Host 唯一
+
+            start_ip: 表示Group 起始 IP 地址
+
+            args: 表示可选参数，传入的格式为"varname=value",具体参数描述如下：
+
+                prefix_len: 表示IP 地址前缀长度，取值范围：9到128，默认为64
+
+                group_cnt: 表示Group 个数，取值约束：32位正整数，默认为1
+
+                group_increment: 表示Group IP 地址的增幅，取值范围：32为正整数，默认为1
+
+                src_start_ip: 表示起始主机 IP 地址（MLDv2），取值约束：String，默认为2000::3
+
+                src_cnt: 表示主机地址个数（MLDv2），取值范围：32位整数，默认为1
+
+                src_increment: 表示主机 IP 地址增幅（MLDv2），取值范围：32位整数，默认为1
+
+                src_prefix_len: 表示主机 IP 地址前缀长度（MLDv2），取值范围：1到128，默认为64
+
+        Example:
+        | testcenter create mld group pool | host1 | group1 | 2001::1 | group_cnt=2 | group_increment=10 |
+        | testcenter create mld group pool | host2 | group2 | 2001::4 | src_cnt=10  |
+        """
+
+        n_ret = TESTCENTER_SUC
+        str_ret = ""
+
+        for i in [1]:
+            # 检查IP地址是否合法
+            if not self._check_ipv6addr_validity(start_ip):
+                n_ret = TESTCENTER_FAIL
+                str_ret = u"%s 不是合法的IP地址." % start_ip
+                break
+
+            # covert args format
+            n_ret, tmp_ret = self._format_args(args)
+            if n_ret == TESTCENTER_FAIL:
+                str_ret = tmp_ret
+                break
+            else:
+                dict_args = tmp_ret
+
+            if "src_start_ip" in dict_args:
+                if not self._check_ipv6addr_validity(dict_args["src_start_ip"]):
+                    n_ret = TESTCENTER_FAIL
+                    str_ret = u"%s 不是合法的IP地址." % dict_args["src_start_ip"]
+                    break
+
+            n_ret, str_ret = self.obj.testcenter_create_mld_group_pool(host_name, group_pool_name, start_ip, dict_args)
+            if n_ret == ATTTestCenter.ATT_TESTCENTER_FAIL:
+                n_ret = TESTCENTER_FAIL
+                break
+
+        if n_ret == TESTCENTER_FAIL:
+            log.user_err(str_ret)
+            raise RuntimeError(str_ret)
+
+        log.user_info(str_ret)
+        return  str_ret
+
+
+    def testcenter_send_mld_leave(self, host_name, group_pool_list=""):
+        """
+        功能描述：向指定组播组发送MLD Leave报文
+
+        参数：
+
+            host_name: 表示要发送报文的host名字
+
+            group_pool_list: 表示MLD Group 的名称标识列表,不指定表示针对所有group
+
+        Example:
+        | testcenter create mld group pool | host1 | group1 | 2001::4 |  |
+        | testcenter send mld report       | host1 | group1 |         |  |
+        | testcenter send mld leave        | host1 | group1 |         |
+        """
+
+        n_ret = TESTCENTER_SUC
+        str_ret = ""
+
+        n_ret, str_ret = self.obj.testcenter_send_mld_leave(host_name, group_pool_list)
+        if n_ret == ATTTestCenter.ATT_TESTCENTER_FAIL:
+            log.user_err(str_ret)
+            raise RuntimeError(str_ret)
+
+        log.user_info(str_ret)
+        return  str_ret
+
+
+    def testcenter_send_mld_report(self, host_name, group_pool_list=""):
+        """
+        功能描述：向指定组播组发送MLD report报文
+
+        参数：
+
+            host_name: 表示要发送报文的host名字
+
+            group_pool_list: 表示MLD Group 的名称标识列表,不指定表示针对所有group
+
+        Example:
+        | testcenter create mld group pool | host1 | group1 | 2001::4 |  |
+        | testcenter send mld report       | host1 | group1 |         |  |
+        """
+
+        n_ret = TESTCENTER_SUC
+        str_ret = ""
+
+        n_ret, str_ret = self.obj.testcenter_send_mld_report(host_name, group_pool_list)
         if n_ret == ATTTestCenter.ATT_TESTCENTER_FAIL:
             log.user_err(str_ret)
             raise RuntimeError(str_ret)
