@@ -2411,6 +2411,9 @@ class TestCenter(object):
 
                 router_id: 表示指定的RouterId，默认为1.1.1.1
 
+                pool_name: 可以用于创建流量的目的地址和源地址。仪表能完成其相应的地址变化，与其仿真功能对应的各层次的封装。
+                           注意：PoolName和routerName不要相同，默认为空。
+
                 local_mac: 表示server接口MAC，默认为00:00:00:11:01:01
 
                 tester_ip_addr: 表示server接口IP，默认为192.0.0.2
@@ -2553,10 +2556,10 @@ class TestCenter(object):
 
             args: 表示可选参数，传入的格式为"varname=value",具体参数描述如下：
 
+                router_id: 表示指定的RouterId，默认为1.1.1.1
+
                 pool_name: 可以用于创建流量的目的地址和源地址。仪表能完成其相应的地址变化，与其仿真功能对应的各层次的封装。
                            注意：PoolName和routerName不要相同，默认为空。
-
-                router_id: 表示指定的RouterId，默认为1.1.1.1
 
                 local_mac: 表示server接口MAC，默认为00:00:00:11:01:01
 
@@ -2579,8 +2582,8 @@ class TestCenter(object):
                 vlan_pri: 优先级,取值范围0-7，默认为0
 
         Example:
-        | testcenter create dhcp client | port1 | router1 | pool_name=client   | router_id=192.168.0.1 |
-        | testcenter create dhcp client | port2 | router2 | enable_vlan=enable | vlan_id=1000          |
+        | testcenter create dhcp client | port1 | router1 | router_id=192.168.0.1 |
+        | testcenter create dhcp client | port2 | router2 | enable_vlan=enable    | vlan_id=1000          |
         """
 
         n_ret = TESTCENTER_SUC
@@ -2699,6 +2702,154 @@ class TestCenter(object):
         str_ret = ""
 
         n_ret, str_ret = self.obj.testcenter_method_dhcp_client(router_name, method)
+        if n_ret == ATTTestCenter.ATT_TESTCENTER_FAIL:
+            log.user_err(str_ret)
+            raise RuntimeError(str_ret)
+
+        log.user_info(str_ret)
+        return  str_ret
+
+
+    def testcenter_create_pppoe_server(self, port_name, router_name, *args):
+        """
+        功能描述：在端口创建PPPoE server,并配置相关属性
+
+        参数：
+
+            port_name: 表示要创建PPPoE server的端口名
+
+            router_name: 表示创建的PPPoE server的名字
+
+            args: 表示可选参数，传入的格式为"varname=value",具体参数描述如下：
+
+                router_id: 表示指定的RouterId，默认为1.1.1.1
+                          注意：由于server分配的ipv4地址不可修改，需将RouteId设置为192.0.1.X网段。
+
+                source_mac_addr: 表示server接口MAC，默认为00:00:00:C0:00:01
+
+                pool_num: 表示支持的PPPoE Client数量，默认为1
+
+                pool_name: 可以用于创建流量的目的地址和源地址。仪表能完成其相应的地址变化，与其仿真功能对应的各层次的封装。
+                           注意：PoolName和routerName不要相同，默认为空。
+
+                pppoe_service_name: 表示服务类型名称，默认为spirent
+
+                active：表示PPPoE server会话是否激活，默认为TRUE
+
+                mru: 表示上层可接受的最大传输单元字节，默认为1492
+
+                echo_request_timer: 表示发送echo request字节的间隔时间，默认为0
+
+                max_config_count: 表示发送config request报文的最大次数，默认为10
+
+                restart_timer: 表示重新发送config request报文的等待时间，默认为3s
+
+                max_termination: 表示发送termination request报文的最大次数，默认为2
+
+                max_failure: 表示在确认PPP失败前收到的NAK报文的最大次数，默认为5
+
+                authentication_role: 表示认证类型和模式，默认为SUT
+                                     注意：定义有SUT, CHAP, PAP。SUT表示设备在测试中需要认证。
+
+                authen_username: 表示认证用户名，默认为who
+
+                authen_password: 表示认证密码，默认为who
+
+                source_ip_addr: 表示srouce ip addr，默认为192.0.1.0
+                                注意：此参数并不是PPPoE server分配的ipv4地址，修改不生效。
+
+                enable_vlan: 指明是否添加vlan，enable/disable, 默认为disable
+
+                vlan_id: 指明Vlan id的值，取值范围0-4095（超出范围设置为0）， 默认为100
+
+                vlan_pri: 优先级,取值范围0-7，默认为0
+
+        Example:
+        | testcenter create pppoe server | port1 | router1 | authentication_role=PAP   |
+        | testcenter create pppoe server | port2 | router2 | enable_vlan=enable        | vlan_id=1000           |
+        """
+
+        n_ret = TESTCENTER_SUC
+        str_ret = ""
+
+        for i in [1]:
+            # covert args format
+            n_ret, tmp_ret = self._format_args(args)
+            if n_ret == TESTCENTER_FAIL:
+                str_ret = tmp_ret
+                break
+            else:
+                dict_args = tmp_ret
+
+            # 检测IP地址的合法性
+            if "router_id" in dict_args:
+                if not self._check_ipaddr_validity(dict_args["router_id"]):
+                    n_ret = TESTCENTER_FAIL
+                    str_ret = u"%s 不是合法的IP地址." % dict_args["router_id"]
+                    break
+
+            if "source_ip_addr" in dict_args:
+                if not self._check_ipaddr_validity(dict_args["source_ip_addr"]):
+                    n_ret = TESTCENTER_FAIL
+                    str_ret = u"%s 不是合法的IP地址." % dict_args["source_ip_addr"]
+                    break
+
+            n_ret, str_ret = self.obj.testcenter_create_pppoe_server(port_name, router_name, dict_args)
+            if n_ret == ATTTestCenter.ATT_TESTCENTER_FAIL:
+                n_ret = TESTCENTER_FAIL
+                break
+
+        if n_ret == TESTCENTER_FAIL:
+            log.user_err(str_ret)
+            raise RuntimeError(str_ret)
+
+        log.user_info(str_ret)
+        return  str_ret
+
+
+    def testcenter_enable_pppoe_server(self, router_name):
+        """
+        功能描述：开启PPPoE Server，开始协议仿真
+
+        参数：
+
+            router_name: 表示要开始协议仿真的PPPoE Server名称
+
+        Example:
+        | testcenter create pppoe server | port1 | router1 | authentication_role=PAP |
+        | testcenter enable pppoe server | router1 |
+        """
+
+        n_ret = TESTCENTER_SUC
+        str_ret = ""
+
+        n_ret, str_ret = self.obj.testcenter_enable_pppoe_server(router_name)
+        if n_ret == ATTTestCenter.ATT_TESTCENTER_FAIL:
+            log.user_err(str_ret)
+            raise RuntimeError(str_ret)
+
+        log.user_info(str_ret)
+        return  str_ret
+
+
+    def testcenter_disable_pppoe_server(self, router_name):
+        """
+        功能描述：关闭PPPoE Server，停止协议仿真
+
+        参数：
+
+            router_name: 表示要停止协议仿真的PPPoE Server名称
+
+        Example:
+        | testcenter create pppoe server | port1 | router1 | authentication_role=PAP |
+        | testcenter enable pppoe server | router1 |
+        | testcenter disable pppoe server | router1 |
+        """
+
+        n_ret = TESTCENTER_SUC
+        str_ret = ""
+
+        n_ret, str_ret = self.obj.testcenter_disable_pppoe_server(router_name)
         if n_ret == ATTTestCenter.ATT_TESTCENTER_FAIL:
             log.user_err(str_ret)
             raise RuntimeError(str_ret)

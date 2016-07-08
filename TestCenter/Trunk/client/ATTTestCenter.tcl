@@ -1132,6 +1132,8 @@ proc ::ATTTestCenter::StartARPStudy {srcHost dstHost} {
 #    portName     表示需要创建DHCP Server的端口名，这里的端口名是预约端口时指定的名字
 #    routerName   表示需要创建的DHCP Server的名字。该名字用于后面对该DHCP Server的其他操作
 #    args         表示需要创建的DHCP Server的属性列表。其格式为{-option value}.router的属性有：
+#       -PoolName     可以用于创建流量的目的地址和源地址。仪表能完成其相应的地址变化，与其仿真功能对应的各层次的封装。
+#                     注意：PoolName和routerName不要相同，默认为空。
 #       -RouterId     表示指定的RouterId，默认为1.1.1.1
 #       -LocalMac     表示server接口MAC，默认为00:00:00:11:01:01
 #       -TesterIpAddr 表示server接口IP，默认为192.0.0.2
@@ -1383,6 +1385,133 @@ proc ::ATTTestCenter::MethodDHCPClient {routerName method} {
 	if {[catch {set ret [xmlrpc::call $::ATTTestCenter::url "::ATTTestCenter::MethodDHCPClient" \
                                      [list [list string $routerName] \
                                            [list string $method] ] ]} err] == 1} {
+
+        set msg "调用xmlrpc::call发生异常，错误信息为: $err ."
+        set nRet $::ATT_TESTCENTER_FAIL
+        return [list $nRet $msg]
+    }
+    # xmlrpc::call返回结果格式为{{} result},其中result为调用接口实际返回值
+	return [lindex $ret 1]
+}
+
+
+#*******************************************************************************
+#Function:    ::ATTTestCenter::CreatePPPoEServer {portName routerName args}
+#Description:   在指定端口创建PPPoE server，并配置PPPoE server的属性
+#Calls:   无
+#Data Accessed:  无
+#Data Updated:  无
+#Input:
+#    portName     表示需要创建PPPoE Server的端口名，这里的端口名是预约端口时指定的名字
+#    routerName   表示需要创建的PPPoE Server的名字。该名字用于后面对该DHCP Server的其他操作
+#    args         表示需要创建的PPPoE Server的属性列表。其格式为{-option value}.router的属性有：
+#       -RouterId           表示指定的RouterId，默认为1.1.1.1
+#       -SourceMacAddr      表示server接口MAC，默认为00:00:00:C0:00:01
+#       -PoolNum            表示支持的PPPoE Client数量，默认为1
+#       -PoolName           可以用于创建流量的目的地址和源地址。仪表能完成其相应的地址变化，与其仿真功能对应的各层次的封装。
+#                           注意：PoolName和routerName不要相同，默认为空。
+#       -PPPoEServiceName   表示服务类型名称，默认为spirent
+#       -Active             表示PPPoE server会话是否激活，默认为TRUE
+#       -MRU                表示上层可接受的最大传输单元字节，默认为1492
+#       -EchoRequestTimer   表示发送echo request字节的间隔时间，默认为0
+#       -MaxConfigCount     表示发送config request报文的最大次数，默认为10
+#       -RestartTimer       表示重新发送config request报文的等待时间，默认为3s
+#       -MaxTermination     表示发送termination request报文的最大次数，默认为2
+#       -MaxFailure         表示在确认PPP失败前收到的NAK报文的最大次数，默认为5
+#       -AuthenticationRole 表示认证类型和模式，默认为SUT
+#                           注意：定义有SUT, CHAP, PAP。SUT表示设备在测试中需要认证。
+#       -AuthenUsername     表示认证用户名，默认为who
+#       -AuthenPassword     表示认证密码，默认为who
+#       -SourceIPAddr       表示srouce ip addr，默认为192.0.0.1
+#       -EnableVlan         指明是否添加vlan，enable/disable, 默认为disable
+#       -VlanId             指明Vlan id的值，取值范围0-4095（超出范围设置为0）， 默认为100
+#       -VlanPriority       优先级,取值范围0-7，默认为0
+#
+#Output:         无
+#Return:
+#    $ATT_TESTCENTER_SUC  $msg        表示成功
+#    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
+#    其他值                           表示失败
+#
+#Others:   无
+#*******************************************************************************
+proc ::ATTTestCenter::CreatePPPoEServer {portName routerName args} {
+
+	# 组建传参列表
+    set tmpArgs ""
+    foreach var $args {
+        lappend tmpArgs [list string $var]
+    }
+
+    # 通过xmlrpc::call调用server端的相应接口
+    if {[catch { set ret [xmlrpc::call $::ATTTestCenter::url "::ATTTestCenter::CreatePPPoEServer" \
+                                      [list [list string $portName] \
+									        [list string $routerName] \
+	                                        [list array $tmpArgs] ] ] } err] == 1} {
+
+        set msg "调用xmlrpc::call发生异常，错误信息为: $err ."
+        set nRet $::ATT_TESTCENTER_FAIL
+        return [list $nRet $msg]
+    }
+    # xmlrpc::call返回结果格式为{{} result},其中result为调用接口实际返回值
+	return [lindex $ret 1]
+}
+
+
+#*******************************************************************************
+#Function:    ::ATTTestCenter::EnablePPPoEServer {routerName}
+#Description:   开启PPPoE Server，开始协议仿真
+#Calls:   无
+#Data Accessed:  无
+#Data Updated:  无
+#Input:
+#    routerName   表示要开始协议仿真的PPPoE Server名称
+#
+#Output:         无
+#Return:
+#    $ATT_TESTCENTER_SUC  $msg        表示成功
+#    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
+#    其他值                           表示失败
+#
+#Others:   无
+#*******************************************************************************
+proc ::ATTTestCenter::EnablePPPoEServer {routerName } {
+
+    # 通过xmlrpc::call调用server端的相应接口
+	if {[catch {set ret [xmlrpc::call $::ATTTestCenter::url "::ATTTestCenter::EnablePPPoEServer" \
+            [list [list string $routerName] ] ]} err] == 1} {
+
+        set msg "调用xmlrpc::call发生异常，错误信息为: $err ."
+        set nRet $::ATT_TESTCENTER_FAIL
+        return [list $nRet $msg]
+    }
+    # xmlrpc::call返回结果格式为{{} result},其中result为调用接口实际返回值
+	return [lindex $ret 1]
+}
+
+
+#*******************************************************************************
+#Function:    ::ATTTestCenter::DisablePPPoEServer {routerName}
+#Description:   关闭PPPoE Server，停止协议仿真
+#Calls:   无
+#Data Accessed:  无
+#Data Updated:  无
+#Input:
+#    routerName   表示要停止协议仿真的PPPoE Server名称
+#
+#Output:         无
+#Return:
+#    $ATT_TESTCENTER_SUC  $msg        表示成功
+#    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
+#    其他值                           表示失败
+#
+#Others:   无
+#*******************************************************************************
+proc ::ATTTestCenter::DisablePPPoEServer {routerName } {
+
+    # 通过xmlrpc::call调用server端的相应接口
+	if {[catch {set ret [xmlrpc::call $::ATTTestCenter::url "::ATTTestCenter::DisablePPPoEServer" \
+            [list [list string $routerName] ] ]} err] == 1} {
 
         set msg "调用xmlrpc::call发生异常，错误信息为: $err ."
         set nRet $::ATT_TESTCENTER_FAIL

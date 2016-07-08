@@ -673,18 +673,18 @@ proc ::TestCenter::DisableDHCPServer {routerName } {
 #*******************************************************************************
 proc ::TestCenter::SetupDHCPClient {routerName args} {
 
-    set log [LOG::init TestCenter_SetupDHCPClient]
+	set log [LOG::init TestCenter_SetupDHCPClient]
 	set errMsg ""
 
-    foreach once {once} {
-        # 检查参数routerName指定的对象是否存在，如果不存在，返回失败
+	foreach once {once} {
+		# 检查参数routerName指定的对象是否存在，如果不存在，返回失败
 		set tmpInfo [array get TestCenter::object $routerName]
 		if {$tmpInfo == ""} {
-			set errMsg "$routerName不存在，无法开始协议仿真."
+			set errMsg "$routerName不存在，无法配置DHCP Client."
 			break
 		}
 
-        # 组建命令
+		# 组建命令
 		if {$args != ""} {
 			set tmpCmd  "$routerName SetSession"
 			for {set i 0} {$i<10} {incr i} {
@@ -698,7 +698,7 @@ proc ::TestCenter::SetupDHCPClient {routerName args} {
 				lappend tmpCmd $option $value
 			}
 
-            LOG::DebugInfo $log [expr $[namespace current]::currentFileName] "RUN CMD: $tmpCmd"
+			LOG::DebugInfo $log [expr $[namespace current]::currentFileName] "RUN CMD: $tmpCmd"
 			# 执行命令
 			if {[catch {set res [eval $tmpCmd]} err] == 1} {
 				set errMsg "配置DHCP Client发生异常，错误信息为:$err ."
@@ -709,17 +709,16 @@ proc ::TestCenter::SetupDHCPClient {routerName args} {
 				break
 			}
 		} else {
-			set errMsg "未传入DHCP Client的任何属性，无法配置DHCP Client"
+			set errMsg "未传入DHCP Client的任何属性，无法配置DHCP Server"
 			break
 		}
 
-        set errMsg "配置DHCP Client成功。"
+		set errMsg "配置DHCP Client成功。"
 		return [list $TestCenter::ExpectSuccess $errMsg]
-    }
-    LOG::DebugErr $log [expr $[namespace current]::currentFileName] $errMsg
+	}
+	LOG::DebugErr $log [expr $[namespace current]::currentFileName] $errMsg
 	return [list $TestCenter::FunctionExecuteError $errMsg]
 }
-
 
 #*******************************************************************************
 #Function:    ::TestCenter::EnableDHCPClient {routerName}
@@ -883,6 +882,191 @@ proc ::TestCenter::MethodDHCPClient {routerName method} {
 	}
 }
 
+
+#*******************************************************************************
+#Function:    ::TestCenter::SetupPPPoEServer {routerName args}
+#Description:   配置PPPoE Server
+#Calls:   无
+#Data Accessed:  无
+#Data Updated:  无
+#Input:
+#    routerName     表示要配置的PPPoE Server的主机名
+#    args          表示PPPoE Server的属性列表,格式为{-option value}.具体属性描述如下：
+#    PPPoEServer:
+#       -SourceMacAddr      表示server接口MAC，默认为00:00:00:C0:00:01
+#       -PoolNum            表示支持的PPPoE Client数量，默认为1
+#       -PoolName           可以用于创建流量的目的地址和源地址。仪表能完成其相应的地址变化，与其仿真功能对应的各层次的封装。
+#                           注意：PoolName和routerName不要相同，默认为空。
+#       -PPPoEServiceName   表示服务类型名称，默认为spirent
+#       -Active             表示PPPoE server会话是否激活，默认为TRUE
+#       -MRU                表示上层可接受的最大传输单元字节，默认为1492
+#       -EchoRequestTimer   表示发送echo request字节的间隔时间，默认为0
+#       -MaxConfigCount     表示发送config request报文的最大次数，默认为10
+#       -RestartTimer       表示重新发送config request报文的等待时间，默认为3s
+#       -MaxTermination     表示发送termination request报文的最大次数，默认为2
+#       -MaxFailure         表示在确认PPP失败前收到的NAK报文的最大次数，默认为5
+#       -AuthenticationRole 表示认证类型和模式，默认为SUT
+#                           注意：定义有SUT, CHAP, PAP。SUT表示设备在测试中需要认证。
+#       -AuthenUsername     表示认证用户名，默认为who
+#       -AuthenPassword     表示认证密码，默认为who
+#       -SourceIPAddr       表示srouce ip addr，默认为192.0.0.1
+#
+#Output:         无
+#Return:
+#    list $TestCenter::ExpectSuccess $msg          表示成功
+#    list $TestCenter::FunctionExecuteError  $msg  表示调用函数失败
+#    其他值                                        表示失败
+#
+#Others:   无
+#*******************************************************************************
+proc ::TestCenter::SetupPPPoEServer {routerName args} {
+
+	set log [LOG::init TestCenter_SetupPPPoEServer]
+	set errMsg ""
+
+	foreach once {once} {
+		# 检查参数routerName指定的对象是否存在，如果不存在，返回失败
+		set tmpInfo [array get TestCenter::object $routerName]
+		if {$tmpInfo == ""} {
+			set errMsg "$routerName不存在，无法配置PPPoE Server."
+			break
+		}
+
+		# 组建命令
+		if {$args != ""} {
+			set tmpCmd  "$routerName SetSession"
+			for {set i 0} {$i<10} {incr i} {
+				if {[llength $args] == 1} {
+					set args [lindex $args 0]
+				} else {
+					break
+				}
+			}
+			foreach {option value} $args {
+				lappend tmpCmd $option $value
+			}
+
+			LOG::DebugInfo $log [expr $[namespace current]::currentFileName] "RUN CMD: $tmpCmd"
+			# 执行命令
+			if {[catch {set res [eval $tmpCmd]} err] == 1} {
+				set errMsg "配置PPPoE Server发生异常，错误信息为:$err ."
+				break
+			}
+			if {$res != 0} {
+				set errMsg "配置PPPoE Server失败，返回值为:$res ."
+				break
+			}
+		} else {
+			set errMsg "未传入PPPoE Server的任何属性，无法配置PPPoE Server"
+			break
+		}
+
+		set errMsg "配置PPPoE Server成功。"
+		return [list $TestCenter::ExpectSuccess $errMsg]
+	}
+	LOG::DebugErr $log [expr $[namespace current]::currentFileName] $errMsg
+	return [list $TestCenter::FunctionExecuteError $errMsg]
+}
+
+
+#*******************************************************************************
+#Function:    ::TestCenter::EnablePPPoEServer {routerName}
+#Description:   开启PPPoE Server，开始协议仿真
+#Calls:   无
+#Data Accessed:  无
+#Data Updated:  无
+#Input:
+#    routerName   表示要开始协议仿真的PPPoE Server名称
+#
+#Output:         无
+#Return:
+#    list $TestCenter::ExpectSuccess $msg          表示成功
+#    list $TestCenter::FunctionExecuteError  $msg  表示调用函数失败
+#    其他值                                        表示失败
+#
+#Others:   无
+#*******************************************************************************
+proc ::TestCenter::EnablePPPoEServer {routerName } {
+
+    set log [LOG::init EnablePPPoEServer]
+	set errMsg ""
+
+    foreach once {once} {
+		# 检查参数routerName指定的对象是否存在，如果不存在，返回失败
+		set tmpInfo [array get TestCenter::object $routerName]
+		if {$tmpInfo == ""} {
+			set errMsg "$routerName不存在，无法开始协议仿真."
+			break
+		}
+
+		# 组建命令
+		set tmpCmd  "$routerName Enable"
+
+		LOG::DebugInfo $log [expr $[namespace current]::currentFileName] "RUN CMD: $tmpCmd"
+		# 执行命令
+		if {[catch {set res [eval $tmpCmd]} err] == 1} {
+			set errMsg "$routerName 开启PPPoE Server协议仿真发生异常，错误信息为:$err ."
+			break
+		}
+		if {$res != 0} {
+			set errMsg "$routerName 开启PPPoE Server协议仿真发生异常，返回值为:$res ."
+			break
+		}
+
+		set errMsg "开启PPPoE Server协议仿真成功。"
+		return [list $TestCenter::ExpectSuccess $errMsg]
+	}
+}
+
+
+#*******************************************************************************
+#Function:    ::TestCenter::DisablePPPoEServer {routerName}
+#Description:   关闭PPPoE Server，停止协议仿真
+#Calls:   无
+#Data Accessed:  无
+#Data Updated:  无
+#Input:
+#    routerName   表示要停止协议仿真的PPPoE Server名称
+#
+#Output:         无
+#Return:
+#    list $TestCenter::ExpectSuccess $msg          表示成功
+#    list $TestCenter::FunctionExecuteError  $msg  表示调用函数失败
+#    其他值                                        表示失败
+#
+#Others:   无
+#******************************************************************************
+proc ::TestCenter::DisablePPPoEServer {routerName } {
+
+    set log [LOG::init DisablePPPoEServer]
+	set errMsg ""
+
+    foreach once {once} {
+		# 检查参数routerName指定的对象是否存在，如果不存在，返回失败
+		set tmpInfo [array get TestCenter::object $routerName]
+		if {$tmpInfo == ""} {
+			set errMsg "$routerName不存在，无法关闭协议仿真."
+			break
+		}
+
+		# 组建命令
+		set tmpCmd  "$routerName Disable"
+
+		LOG::DebugInfo $log [expr $[namespace current]::currentFileName] "RUN CMD: $tmpCmd"
+		# 执行命令
+		if {[catch {set res [eval $tmpCmd]} err] == 1} {
+			set errMsg "$routerName 关闭PPPoE Server协议仿真发生异常，错误信息为:$err ."
+			break
+		}
+		if {$res != 0} {
+			set errMsg "$routerName 关闭PPPoE Server协议仿真发生异常，返回值为:$res ."
+			break
+		}
+
+		set errMsg "关闭PPPoE Server协议仿真成功。"
+		return [list $TestCenter::ExpectSuccess $errMsg]
+	}
+}
 
 
 #*******************************************************************************

@@ -1,4 +1,4 @@
-#coding:utf-8
+# -*- coding: utf-8 -*-
 
 # /*************************************************************************
 #  Copyright (C), 2013-2014, SHENZHEN GONGJIN ELECTRONICS. Co., Ltd.
@@ -2995,6 +2995,8 @@ class ATTTestCenter(object):
             router_name: 表示创建的DHCP server的名字
             dict_args: 表示可选参数字典，具体参数描述如下：
                 router_id: 表示指定的RouterId，默认为1.1.1.1
+                pool_name: 可以用于创建流量的目的地址和源地址。仪表能完成其相应的地址变化，与其仿真功能对应的各层次的封装。
+                           注意：PoolName和routerName不要相同，默认为空。
                 local_mac: 表示server接口MAC，默认为00:00:00:11:01:01
                 tester_ip_addr: 表示server接口IP，默认为192.0.0.2
                 pool_start: 表示地址池开始的IP地址，默认为192.0.0.1
@@ -3025,6 +3027,9 @@ class ATTTestCenter(object):
 
                 if var == "router_id":
                     cmd = "%s -RouterId %s" % (cmd, tmp_dict[var])
+
+                elif var == "pool_name":
+                    cmd = "%s -PoolName %s" % (cmd, tmp_dict[var])
 
                 elif var == "local_mac":
                     cmd = "%s -LocalMac %s" % (cmd, tmp_dict[var])
@@ -3166,9 +3171,9 @@ class ATTTestCenter(object):
             port_name: 表示要创建DHCP client的端口别名，必须是预约端口时指定的名字
             router_name: 表示创建的DHCP client的名字
             dict_args: 表示可选参数字典，具体参数描述如下：
+                router_id: 表示指定的RouterId，默认为1.1.1.1
                 pool_name: 可以用于创建流量的目的地址和源地址。仪表能完成其相应的地址变化，与其仿真功能对应的各层次的封装。
                            注意：PoolName和routerName不要相同，默认为空。
-                router_id: 表示指定的RouterId，默认为1.1.1.1
                 local_mac: 表示server接口MAC，默认为00:00:00:11:01:01
                 count: 表示模拟的主机数量，默认为1
                 auto_retry_num: 表示最大尝试建立连接的次数，默认为1
@@ -3195,11 +3200,11 @@ class ATTTestCenter(object):
             # check user input args
             for var in tmp_dict.keys():
 
-                if var == "pool_name":
-                    cmd = "%s -PoolName %s" % (cmd, tmp_dict[var])
-
-                elif var == "router_id":
+                if var == "router_id":
                     cmd = "%s -RouterId %s" % (cmd, tmp_dict[var])
+
+                elif var == "pool_name":
+                    cmd = "%s -PoolName %s" % (cmd, tmp_dict[var])
 
                 elif var == "local_mac":
                     cmd = "%s -LocalMac %s" % (cmd, tmp_dict[var])
@@ -3233,22 +3238,22 @@ class ATTTestCenter(object):
 
                 else:
                     str_ret = "unsupport argument %s." % var
-                    raise RuntimeError("execute testcenter_create_dhcp_client fail, errInfo:%s" % str_ret)
+                    raise RuntimeError("execute testcenter_create_dhcp_server fail, errInfo:%s" % str_ret)
 
-                # execute TCL Command
-                self.tcl_ret = self.tcl.eval(cmd)
+            # execute TCL Command
+            self.tcl_ret = self.tcl.eval(cmd)
 
-                # parse return value
-                if self.tcl_ret:
-                    n_ret = int(self.tcl_ret.split(' ', 1)[0])
-                    str_ret = self.tcl_ret.split(' ', 1)[1].strip('{}')
-                    str_ret = self._convert_coding(str_ret)
+            # parse return value
+            if self.tcl_ret:
+                n_ret = int(self.tcl_ret.split(' ', 1)[0])
+                str_ret = self.tcl_ret.split(' ', 1)[1].strip('{}')
+                str_ret = self._convert_coding(str_ret)
 
-                else:
-                    n_ret = ATT_TESTCENTER_FAIL
-                    str_ret = u"执行TCL command %s 失败，无错误信息返回。" % cmd
+            else:
+                n_ret = ATT_TESTCENTER_FAIL
+                str_ret = u"执行TCL command %s 失败，无错误信息返回。" % cmd
 
-        except Exception as e:
+        except Exception,e:
             n_ret = ATT_TESTCENTER_FAIL
             str_ret = u"执行TCL command %s 发生异常，错误信息为：%s" % (cmd, e)
 
@@ -3350,6 +3355,204 @@ class ATTTestCenter(object):
         try:
             # build TCL Command
             cmd = "::ATTTestCenter::MethodDHCPClient %s %s"  % (router_name, method)
+
+            # execute TCL Command
+            self.tcl_ret = self.tcl.eval(cmd)
+
+            # parse return value, in normal case, return valus is {{num} {string}}
+            if self.tcl_ret:
+                n_ret = int(self.tcl_ret.split(' ', 1)[0])
+                str_ret = self.tcl_ret.split(' ', 1)[1].strip('{}')
+                str_ret = self._convert_coding(str_ret)
+
+            else:
+                n_ret = ATT_TESTCENTER_FAIL
+                str_ret = u"执行TCL command %s 失败，无错误信息返回。" % cmd
+
+        except Exception as e:
+            n_ret = ATT_TESTCENTER_FAIL
+            str_ret = u"执行TCL command %s 发生异常，错误信息为：%s" % (cmd, e)
+
+        return n_ret, str_ret
+
+
+    def testcenter_create_pppoe_server(self, port_name, router_name, dict_args):
+        """
+        功能描述：在端口创建PPPoE server,并配置相关属性
+
+        参数：
+            port_name: 表示要创建PPPoE server的端口别名，必须是预约端口时指定的名字
+            router_name: 表示创建的PPPoE server的名字
+            dict_args: 表示可选参数字典，具体参数描述如下：
+                router_id: 表示指定的RouterId，默认为1.1.1.1
+                source_mac_addr: 表示server接口MAC，默认为00:00:00:C0:00:01
+                pool_num: 表示支持的PPPoE Client数量，默认为1
+                pool_name: 可以用于创建流量的目的地址和源地址。仪表能完成其相应的地址变化，与其仿真功能对应的各层次的封装。
+                           注意：PoolName和routerName不要相同，默认为空。
+                pppoe_service_name: 表示服务类型名称，默认为spirent
+                active：表示PPPoE server会话是否激活，默认为TRUE
+                mru: 表示上层可接受的最大传输单元字节，默认为1492
+                echo_request_timer: 表示发送echo request字节的间隔时间，默认为0
+                max_config_count: 表示发送config request报文的最大次数，默认为10
+                restart_timer: 表示重新发送config request报文的等待时间，默认为3s
+                max_termination: 表示发送termination request报文的最大次数，默认为2
+                max_failure: 表示在确认PPP失败前收到的NAK报文的最大次数，默认为5
+                authentication_role: 表示认证类型和模式，默认为SUT
+                                     注意：定义有SUT, CHAP, PAP。SUT表示设备在测试中需要认证。
+                authen_username: 表示认证用户名，默认为who
+                authen_password: 表示认证密码，默认为who
+                source_ip_addr: 表示srouce ip addr，默认为192.0.0.1
+                enable_vlan: 指明是否添加vlan，enable/disable, 默认为disable
+                vlan_id: 指明Vlan id的值，取值范围0-4095（超出范围设置为0）， 默认为100
+                vlan_pri: 优先级,取值范围0-7，默认为0
+
+        """
+
+        n_ret = ATT_TESTCENTER_SUC
+        str_ret = ""
+
+        try:
+
+            tmp_dict = dict_args
+
+            # build TCL Command
+            cmd = "::ATTTestCenter::CreatePPPoEServer %s %s "  % (port_name, router_name)
+
+            # check user input args
+            for var in tmp_dict.keys():
+
+                if var == "router_id":
+                    cmd = "%s -RouterId %s" % (cmd, tmp_dict[var])
+
+                elif var == "source_mac_addr":
+                    cmd = "%s -SourceMacAddr %s" % (cmd, tmp_dict[var])
+
+                elif var == "pool_num":
+                    cmd = "%s -PoolNum %s" % (cmd, tmp_dict[var])
+
+                elif var == "pool_name":
+                    cmd = "%s -PoolName %s" % (cmd, tmp_dict[var])
+
+                elif var == "pppoe_service_name":
+                    cmd = "%s -PPPoEServiceName %s" % (cmd, tmp_dict[var])
+
+                elif var == "active":
+                    cmd = "%s -Active %s" % (cmd, tmp_dict[var])
+
+                elif var == "mru":
+                    cmd = "%s -MRU %s" % (cmd, tmp_dict[var])
+
+                elif var == "echo_request_timer":
+                    cmd = "%s -EchoRequestTimer %s" % (cmd, tmp_dict[var])
+
+                elif var == "max_config_count":
+                    cmd = "%s -MaxConfigCount %s" % (cmd, tmp_dict[var])
+
+                elif var == "restart_timer":
+                    cmd = "%s -RestartTimer %s" % (cmd, tmp_dict[var])
+
+                elif var == "max_termination":
+                    cmd = "%s -MaxTermination %s" % (cmd, tmp_dict[var])
+
+                elif var == "max_failure":
+                    cmd = "%s -MaxFailure %s" % (cmd, tmp_dict[var])
+
+                elif var == "authentication_role":
+                    cmd = "%s -AuthenticationRole %s" % (cmd, tmp_dict[var])
+
+                elif var == "authen_username":
+                    cmd = "%s -AuthenUsername %s" % (cmd, tmp_dict[var])
+
+                elif var == "authen_password":
+                    cmd = "%s -AuthenPassword %s" % (cmd, tmp_dict[var])
+
+                elif var == "source_ip_addr":
+                    cmd = "%s -SourceIPAddr %s" % (cmd, tmp_dict[var])
+
+                elif var == "enable_vlan":
+                    cmd = "%s -EnableVlan %s" % (cmd, tmp_dict[var])
+
+                elif var == "vlan_id":
+                    cmd = "%s -VlanId %s" % (cmd, tmp_dict[var])
+
+                elif var == "vlan_pri":
+                    cmd = "%s -VlanPriority %s" % (cmd, tmp_dict[var])
+
+                else:
+                    str_ret = "unsupport argument %s." % var
+                    raise RuntimeError("execute testcenter_create_dhcp_server fail, errInfo:%s" % str_ret)
+
+            # execute TCL Command
+            self.tcl_ret = self.tcl.eval(cmd)
+
+            # parse return value
+            if self.tcl_ret:
+                n_ret = int(self.tcl_ret.split(' ', 1)[0])
+                str_ret = self.tcl_ret.split(' ', 1)[1].strip('{}')
+                str_ret = self._convert_coding(str_ret)
+
+            else:
+                n_ret = ATT_TESTCENTER_FAIL
+                str_ret = u"执行TCL command %s 失败，无错误信息返回。" % cmd
+
+        except Exception,e:
+            n_ret = ATT_TESTCENTER_FAIL
+            str_ret = u"执行TCL command %s 发生异常，错误信息为：%s" % (cmd, e)
+
+        return n_ret, str_ret
+
+
+    def testcenter_enable_pppoe_server(self, router_name):
+        """
+        功能描述：开启PPPoE Server，开始协议仿真
+
+        参数：
+            router_name: 表示要开始协议仿真的PPPoE Server名称
+
+        """
+
+        n_ret = ATT_TESTCENTER_SUC
+        str_ret = ""
+
+        try:
+            # build TCL Command
+            cmd = "::ATTTestCenter::EnablePPPoEServer %s"  % router_name
+
+            # execute TCL Command
+            self.tcl_ret = self.tcl.eval(cmd)
+
+            # parse return value, in normal case, return valus is {{num} {string}}
+            if self.tcl_ret:
+                n_ret = int(self.tcl_ret.split(' ', 1)[0])
+                str_ret = self.tcl_ret.split(' ', 1)[1].strip('{}')
+                str_ret = self._convert_coding(str_ret)
+
+            else:
+                n_ret = ATT_TESTCENTER_FAIL
+                str_ret = u"执行TCL command %s 失败，无错误信息返回。" % cmd
+
+        except Exception as e:
+            n_ret = ATT_TESTCENTER_FAIL
+            str_ret = u"执行TCL command %s 发生异常，错误信息为：%s" % (cmd, e)
+
+        return n_ret, str_ret
+
+
+    def testcenter_disable_pppoe_server(self, router_name):
+        """
+        功能描述：关闭PPPoE Server，停止协议仿真
+
+        参数：
+            router_name: 表示要停止协议仿真的PPPoE Server名称
+
+        """
+
+        n_ret = ATT_TESTCENTER_SUC
+        str_ret = ""
+
+        try:
+            # build TCL Command
+            cmd = "::ATTTestCenter::DisablePPPoEServer %s"  % router_name
 
             # execute TCL Command
             self.tcl_ret = self.tcl.eval(cmd)

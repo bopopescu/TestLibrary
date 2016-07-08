@@ -2064,7 +2064,7 @@ proc ::ATTTestCenter::CreateDHCPClient {portName routerName args} {
 
     foreach once {once} {
 
-        # 去掉args外层{}
+		# 去掉args外层{}
         if {[llength $args] == 1} {
             set args [lindex $args 0]
         }
@@ -2145,10 +2145,10 @@ proc ::ATTTestCenter::CreateDHCPClient {portName routerName args} {
             break
         }
 
-        # 调用::TestCenter::SetupDHCPClient创建DHCP Client
+        # 调用::TestCenter::SetupDHCPServer创建DHCP Client
 		if {[catch {set res [TestCenter::SetupDHCPClient $routerName $args]} err] == 1} {
 
-			set msg "调用TestCenter::SetupDHCPClient发生异常，错误信息为: $err ."
+			set msg "调用TestCenter::SetupDHCPServer发生异常，错误信息为: $err ."
 			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
 			set nRet $::ATT_TESTCENTER_FAIL
 			break
@@ -2168,9 +2168,9 @@ proc ::ATTTestCenter::CreateDHCPClient {portName routerName args} {
             # set msg display to user
             set msg "在端口$portName 创建$routerName 成功！"
 		}
-    }
+	}
 
-    return [list array [list [list int $nRet] [list string $msg]]]
+	return [list array [list [list int $nRet] [list string $msg]]]
 }
 
 
@@ -2299,7 +2299,7 @@ proc ::ATTTestCenter::DisableDHCPClient {routerName } {
 #
 #Others:   无
 #*******************************************************************************
-proc ::ATTTestCenter::DisableDHCPClient {routerName method} {
+proc ::ATTTestCenter::MethodDHCPClient {routerName method} {
 
     set nRet $::ATT_TESTCENTER_SUC
 	set func [::__FUNC__]
@@ -2311,6 +2311,268 @@ proc ::ATTTestCenter::DisableDHCPClient {routerName method} {
         if {[catch {set res [TestCenter::MethodDHCPClient $routerName $method]} err] == 1} {
 
 			set msg "调用TestCenter::MethodDHCPClient 发生异常，错误信息为: $err ."
+			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
+			set nRet $::ATT_TESTCENTER_FAIL
+			break
+		}
+        # 判断执行结果
+        if {[lindex $res 0] != $TestCenter::ExpectSuccess} {
+
+			set msg [lindex $res 1]
+			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
+			set nRet $::ATT_TESTCENTER_FAIL
+			break
+		} else {
+
+			set msg [lindex $res 1]
+			LOG::DebugInfo $func $::ATTTestCenter::__FILE__  $msg
+        }
+    }
+
+    return [list array [list [list int $nRet] [list string $msg]]]
+}
+
+
+#*******************************************************************************
+#Function:    ::ATTTestCenter::CreatePPPoEServer {portName routerName args}
+#Description:   在指定端口创建PPPoE server，并配置PPPoE server的属性
+#Calls:   无
+#Data Accessed:  无
+#Data Updated:  无
+#Input:
+#    portName     表示需要创建PPPoE Server的端口名，这里的端口名是预约端口时指定的名字
+#    routerName   表示需要创建的PPPoE Server的名字。该名字用于后面对该DHCP Server的其他操作
+#    args         表示需要创建的PPPoE Server的属性列表。其格式为{-option value}.router的属性有：
+#       -RouterId           表示指定的RouterId，默认为1.1.1.1
+#       -SourceMacAddr      表示server接口MAC，默认为00:00:00:C0:00:01
+#       -PoolNum            表示支持的PPPoE Client数量，默认为1
+#       -PoolName           可以用于创建流量的目的地址和源地址。仪表能完成其相应的地址变化，与其仿真功能对应的各层次的封装。
+#                           注意：PoolName和routerName不要相同，默认为空。
+#       -PPPoEServiceName   表示服务类型名称，默认为spirent
+#       -Active             表示PPPoE server会话是否激活，默认为TRUE
+#       -MRU                表示上层可接受的最大传输单元字节，默认为1492
+#       -EchoRequestTimer   表示发送echo request字节的间隔时间，默认为0
+#       -MaxConfigCount     表示发送config request报文的最大次数，默认为10
+#       -RestartTimer       表示重新发送config request报文的等待时间，默认为3s
+#       -MaxTermination     表示发送termination request报文的最大次数，默认为2
+#       -MaxFailure         表示在确认PPP失败前收到的NAK报文的最大次数，默认为5
+#       -AuthenticationRole 表示认证类型和模式，默认为SUT
+#                           注意：定义有SUT, CHAP, PAP。SUT表示设备在测试中需要认证。
+#       -AuthenUsername     表示认证用户名，默认为who
+#       -AuthenPassword     表示认证密码，默认为who
+#       -SourceIPAddr       表示srouce ip addr，默认为192.0.0.1
+#       -EnableVlan         指明是否添加vlan，enable/disable, 默认为disable
+#       -VlanId             指明Vlan id的值，取值范围0-4095（超出范围设置为0）， 默认为100
+#       -VlanPriority       优先级,取值范围0-7，默认为0
+#
+#Output:         无
+#Return:
+#    $ATT_TESTCENTER_SUC  $msg        表示成功
+#    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
+#    其他值                           表示失败
+#
+#Others:   无
+#*******************************************************************************
+proc ::ATTTestCenter::CreatePPPoEServer {portName routerName args} {
+
+    set nRet $::ATT_TESTCENTER_SUC
+	set func [::__FUNC__]
+	set msg  ""
+	set IntName $portName
+    set argsSetupRouter ""
+
+    foreach once {once} {
+
+		# 去掉args外层{}
+        if {[llength $args] == 1} {
+            set args [lindex $args 0]
+        }
+
+        # 判断是否要添加vlan
+        set index [lsearch -nocase $args -EnableVlan]
+        if {$index != -1} {
+
+            set EnableVlan [lindex $args [expr $index + 1]]
+            set args [lreplace $args $index [expr $index + 1]]
+        } else  {
+            set EnableVlan disable
+        }
+
+        # 如果要添加vlan，需要先创建vlan子接口，然后再用子接口创建host
+        if {[string tolower $EnableVlan] == "enable"} {
+            # 获取子接口的配置信息
+            set index [lsearch -nocase $args -VlanId]
+            if {$index != -1} {
+                set VlanId [lindex $args [expr $index + 1]]
+                set args [lreplace $args $index [expr $index + 1]]
+            } else  {
+                set VlanId 100
+            }
+
+            set index [lsearch -nocase $args -VlanPriority]
+            if {$index != -1} {
+                set VlanPriority [lindex $args [expr $index + 1]]
+                set args [lreplace $args $index [expr $index + 1]]
+            } else  {
+                set VlanPriority 0
+            }
+
+            # 调用::TestCenter::SetupVlan创建子接口
+            set vlanName vlan_$routerName
+            if {[catch {set res [TestCenter::SetupVlan $portName $vlanName -VlanId $VlanId -VlanPriority $VlanPriority]} err] == 1} {
+
+                set msg "调用TestCenter::SetupVlan发生异常，错误信息为: $err ."
+                LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
+                set nRet $::ATT_TESTCENTER_FAIL
+                break
+            }
+            # 判断执行结果
+            if {[lindex $res 0] != $TestCenter::ExpectSuccess} {
+
+                set msg [lindex $res 1]
+                LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
+                set nRet $::ATT_TESTCENTER_FAIL
+                break
+            }
+            LOG::DebugInfo $func $::ATTTestCenter::__FILE__  "创建Vlan子接口成功。"
+            set IntName $vlanName
+        }
+
+        # 判断是否要设置RouterId
+        set index [lsearch -nocase $args -RouterId]
+        if {$index != -1} {
+
+            set RouterId [lindex $args [expr $index + 1]]
+            set args [lreplace $args $index [expr $index + 1]]
+            set argsSetupRouter [list -RouterId $RouterId]
+        }
+
+        # 调用::TestCenter::SetupRouter创建PPPoE Server
+        if {[catch {set res [TestCenter::SetupRouter $IntName $routerName PPPoEServer $argsSetupRouter]} err] == 1} {
+
+            set msg "调用TestCenter::发生异常，错误信息为: $err ."
+            LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
+            set nRet $::ATT_TESTCENTER_FAIL
+            break
+        }
+        # 判断执行结果
+        if {[lindex $res 0] != $TestCenter::ExpectSuccess} {
+
+            set msg [lindex $res 1]
+            LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
+            set nRet $::ATT_TESTCENTER_FAIL
+            break
+        }
+
+        # 调用::TestCenter::SetupPPPoEServer创建PPPoE Server
+		if {[catch {set res [TestCenter::SetupPPPoEServer $routerName $args]} err] == 1} {
+
+			set msg "调用TestCenter::SetupPPPoEServer发生异常，错误信息为: $err ."
+			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
+			set nRet $::ATT_TESTCENTER_FAIL
+			break
+		}
+		# 判断执行结果
+		if {[lindex $res 0] != $TestCenter::ExpectSuccess} {
+
+			set msg [lindex $res 1]
+			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
+			set nRet $::ATT_TESTCENTER_FAIL
+			break
+		} else {
+
+			set msg [lindex $res 1]
+			LOG::DebugInfo $func $::ATTTestCenter::__FILE__  $msg
+
+            # set msg display to user
+            set msg "在端口$portName 创建$routerName 成功！"
+		}
+	}
+
+	return [list array [list [list int $nRet] [list string $msg]]]
+}
+
+
+#*******************************************************************************
+#Function:    ::ATTTestCenter::EnablePPPoEServer {routerName}
+#Description:   开启PPPoE Server，开始协议仿真
+#Calls:   无
+#Data Accessed:  无
+#Data Updated:  无
+#Input:
+#    routerName   表示要开始协议仿真的PPPoE Server名称
+#
+#Output:         无
+#Return:
+#    $ATT_TESTCENTER_SUC  $msg        表示成功
+#    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
+#    其他值                           表示失败
+#
+#Others:   无
+#*******************************************************************************
+proc ::ATTTestCenter::EnablePPPoEServer {routerName } {
+
+    set nRet $::ATT_TESTCENTER_SUC
+	set func [::__FUNC__]
+	set msg  ""
+
+    foreach once {once} {
+
+        # 调用::TestCenter::EnablePPPoEServer开启PPPoE Server仿真
+        if {[catch {set res [TestCenter::EnablePPPoEServer $routerName]} err] == 1} {
+
+			set msg "调用TestCenter::EnablePPPoEServer 发生异常，错误信息为: $err ."
+			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
+			set nRet $::ATT_TESTCENTER_FAIL
+			break
+		}
+        # 判断执行结果
+        if {[lindex $res 0] != $TestCenter::ExpectSuccess} {
+
+			set msg [lindex $res 1]
+			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
+			set nRet $::ATT_TESTCENTER_FAIL
+			break
+		} else {
+
+			set msg [lindex $res 1]
+			LOG::DebugInfo $func $::ATTTestCenter::__FILE__  $msg
+        }
+    }
+
+    return [list array [list [list int $nRet] [list string $msg]]]
+}
+
+
+#*******************************************************************************
+#Function:    ::ATTTestCenter::DisablePPPoEServer {routerName}
+#Description:   关闭PPPoE Server，停止协议仿真
+#Calls:   无
+#Data Accessed:  无
+#Data Updated:  无
+#Input:
+#    routerName   表示要停止协议仿真的PPPoE Server名称
+#
+#Output:         无
+#Return:
+#    $ATT_TESTCENTER_SUC  $msg        表示成功
+#    $ATT_TESTCENTER_FAIL $msg        表示调用函数失败
+#    其他值                           表示失败
+#
+#Others:   无
+#*******************************************************************************
+proc ::ATTTestCenter::DisablePPPoEServer {routerName } {
+
+    set nRet $::ATT_TESTCENTER_SUC
+	set func [::__FUNC__]
+	set msg  ""
+
+    foreach once {once} {
+
+        # 调用::TestCenter::DisablePPPoEServer关闭PPPoE Server仿真
+        if {[catch {set res [TestCenter::DisablePPPoEServer $routerName]} err] == 1} {
+
+			set msg "调用TestCenter::DisablePPPoEServer 发生异常，错误信息为: $err ."
 			LOG::DebugErr $func $::ATTTestCenter::__FILE__  $msg
 			set nRet $::ATT_TESTCENTER_FAIL
 			break
