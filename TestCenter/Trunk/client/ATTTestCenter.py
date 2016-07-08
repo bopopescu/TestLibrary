@@ -2927,10 +2927,10 @@ class ATTTestCenter(object):
                 else:
                     str_ret = "unsupport argument %s." % var
                     raise RuntimeError("execute testcenter_create_host fail, errInfo:%s" % str_ret)
-            log.user_info(cmd)
+
             # execute TCL Command
             self.tcl_ret = self.tcl.eval(cmd)
-            log.user_info(self.tcl_ret)
+
             # parse return value
             if self.tcl_ret:
                 n_ret = int(self.tcl_ret.split(' ', 1)[0])
