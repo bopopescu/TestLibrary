@@ -1232,6 +1232,7 @@ class Wireless():
     #获取无线接口信息参数 add by zhaojun 2017-5-22
     def query_netsh_wlan_show_interface(self, key):
         '''
+        功能描述：根据用户输入的无线接口信息参数返回具体的值，若用户输入的参数无效或者无线网卡处于未连接状态，则返回错误。
 
         参数：
         key: 无线接口信息参数,可输入的值：{名称，描述，GUID，物理地址，状态，SSID，BSSID，网络类型，无线电类型，身份验证，密码，连接模式，信道，接收速率(Mbps)，传输速率(Mbps)，信号，配置文件}；
