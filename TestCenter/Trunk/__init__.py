@@ -349,7 +349,7 @@ class TestCenter(object):
 
                 mtu_size: 表示端口的MTU。默认为1500
 
-                master_or_slave: 表示自协商模式，取值范围为MASTER,SLAVE。
+                main_or_subordinate: 表示自协商模式，取值范围为MASTER,SLAVE。
                                  只有当auto_neg为Enable时，该参数才有效。默认为MASTER
 
                 port_mode: 仅当link_speed为10G时,该参数才有效，取值范围为LAN、WAN。默认为LAN

@@ -242,7 +242,7 @@ class ATTTestCenter(object):
                             当设置为Enable时，link_speed和duplex_mode两个参数的设置无效。默认为Enable
                flow_control: 表示是否开启端口的流控功能，取值范围为ON、OFF。默认为OFF
                mtu_size:     表示端口的MTU。默认为1500
-               master_or_slave: 表示自协商模式，取值范围为MASTER,SLAVE。
+               main_or_subordinate: 表示自协商模式，取值范围为MASTER,SLAVE。
                                 只有当auto_neg为Enable时，该参数才有效。默认为MASTER
                port_mode: 仅当link_speed为10G时,该参数才有效，取值范围为LAN、WAN。默认为LAN
         """
@@ -278,8 +278,8 @@ class ATTTestCenter(object):
                 elif var == "mtu_size":
                     cmd = "%s -mtuSize %s" % (cmd, tmp_dict[var])
 
-                elif var == "master_or_slave":
-                    cmd = "%s -autoNegotiationMasterSlave %s" % (cmd, tmp_dict[var])
+                elif var == "main_or_subordinate":
+                    cmd = "%s -autoNegotiationMainSubordinate %s" % (cmd, tmp_dict[var])
 
                 elif var == "port_mode":
                     cmd = "%s -portMode %s" % (cmd, tmp_dict[var])
